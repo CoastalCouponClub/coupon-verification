@@ -76,7 +76,7 @@
       resultBox.textContent = 'Checking...';
 
       try {
-        const response = await fetch(`/.netlify/functions/validate-code?code=${encodeURIComponent(code)}`);
+        const response = await fetch(`/.netlify/functions/validatecode?code=${encodeURIComponent(code)}`);
         const data = await response.json();
 
         if (data.valid) {
