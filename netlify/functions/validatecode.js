@@ -11,7 +11,7 @@ exports.handler = async function(event, context) {
   }
 
   try {
-    const response = await fetch('https://api.walletthat.com/v3/passes', {
+    const response = await fetch('https://api.skycore.com/API/http/v3/', {
       method: 'POST',
       headers: {
         'X-Api-Key': process.env.WALLETTHAT_API_KEY,
