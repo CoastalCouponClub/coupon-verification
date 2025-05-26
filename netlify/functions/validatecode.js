@@ -19,7 +19,7 @@ exports.handler = async function(event, context) {
       },
       body: JSON.stringify({
         action: 'getpassdata',
-        'pass-id': code,
+        'barcode-text': code,
         'pass-template-id': process.env.WALLETTHAT_TEMPLATE_ID
       })
     });
