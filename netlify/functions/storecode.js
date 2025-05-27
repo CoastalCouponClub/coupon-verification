@@ -1,21 +1,32 @@
-exports.handler = async (event) => {
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+
+if (!getApps().length) {
+  initializeApp({
+    credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT))
+  });
+}
+
+const db = getFirestore();
+
+export const handler = async (event) => {
   try {
-    const admin = await import('firebase-admin');
-    const { getFirestore } = await import('firebase-admin/firestore');
-
-    if (!admin.apps.length) {
-      admin.initializeApp();
-    }
-
-    const db = getFirestore();
     const data = JSON.parse(event.body);
     const barcode = data?.['barcode-text'];
     const secret = data?.secret;
 
-    if (!barcode || secret !== process.env.CCC_WEBHOOK_SECRET) {
+    // Validate webhook secret
+    if (secret !== process.env.CCC_WEBHOOK_SECRET) {
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ message: 'Forbidden: invalid secret' })
+      };
+    }
+
+    if (!barcode) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ message: 'Missing barcode-text or invalid secret' }),
+        body: JSON.stringify({ message: 'Missing barcode-text' })
       };
     }
 
@@ -23,17 +34,18 @@ exports.handler = async (event) => {
     await db.collection('verifiedCodes').doc(barcode).set({
       isValid: true,
       timestamp: now,
-      redemptionCount: 0,
+      redemptionCount: 0
     });
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: 'Code stored successfully' }),
+      body: JSON.stringify({ message: 'Code stored successfully' })
     };
   } catch (error) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: error.message }),
+      body: JSON.stringify({ error: error.message })
     };
   }
 };
+
