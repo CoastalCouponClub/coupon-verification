@@ -1,39 +1,38 @@
-const { initializeApp } = require('firebase/app');
-const { getFirestore, doc, setDoc } = require('firebase/firestore');
+import { initializeApp } from 'firebase/app';
+import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 const firebaseConfig = JSON.parse(process.env.FIREBASE_CLIENT_CONFIG);
+const webhookSecret = process.env.CCC_WEBHOOK_SECRET;
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   try {
-    const data = JSON.parse(event.body);
+    const body = JSON.parse(event.body);
+    const { secret, 'barcode-value': barcode } = body;
 
-    const barcode = data?.['barcode-text'];
-    const secret = data?.secret;
-
-    if (!barcode || secret !== process.env.CCC_WEBHOOK_SECRET) {
+    if (!barcode || secret !== webhookSecret) {
       return {
-        statusCode: 401,
-        body: JSON.stringify({ message: 'Unauthorized or missing data' }),
+        statusCode: 400,
+        body: JSON.stringify({ message: 'Missing barcode-value or invalid secret' }),
       };
     }
 
     await setDoc(doc(db, 'verifiedCodes', barcode), {
       isValid: true,
-      timestamp: new Date().toISOString(),
+      timestamp: serverTimestamp(),
       redemptionCount: 0,
-      secret,
     });
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: 'Code stored successfully' }),
+      body: JSON.stringify({ message: 'Stored successfully', barcode }),
     };
-  } catch (err) {
+  } catch (error) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err.message }),
+      body: JSON.stringify({ message: error.message }),
     };
   }
 };
