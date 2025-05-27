@@ -1,0 +1,1 @@
+// Placeholder for firestore interaction logic
