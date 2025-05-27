@@ -1,47 +1,49 @@
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const { initializeApp } = require('firebase/app');
+const { getFirestore, doc, getDoc } = require('firebase/firestore');
 
-exports.handler = async function(event, context) {
-  const { code } = event.queryStringParameters;
+const firebaseConfig = JSON.parse(process.env.FIREBASE_CLIENT_CONFIG);
 
-  if (!code) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ valid: false, error: 'Missing code parameter' })
-    };
-  }
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
+exports.handler = async (event) => {
   try {
-    const response = await fetch('https://api.skycore.com/API/http/v3/', {
-      method: 'POST',
-      headers: {
-        'X-Api-Key': process.env.WALLETTHAT_API_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        action: 'getpassdata',
-        'barcode-text': code,
-        'pass-template-id': process.env.WALLETTHAT_TEMPLATE_ID
-      })
-    });
+    const code = event.queryStringParameters?.code;
 
-    const data = await response.json();
+    if (!code) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ valid: false, error: 'Code is required' }),
+      };
+    }
 
-    if (data.status === 'Success') {
+    const docRef = doc(db, 'verifiedCodes', code);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
       return {
         statusCode: 200,
-        body: JSON.stringify({ valid: true, data })
+        body: JSON.stringify({ valid: false, error: 'Code not found or inactive' }),
+      };
+    }
+
+    const data = docSnap.data();
+
+    if (data.isValid) {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ valid: true, redemptionCount: data.redemptionCount || 0 }),
       };
     } else {
       return {
-        statusCode: 404,
-        body: JSON.stringify({ valid: false, error: data['error-message'] })
+        statusCode: 200,
+        body: JSON.stringify({ valid: false, error: 'Code is inactive' }),
       };
     }
   } catch (err) {
-    console.error('API error:', err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ valid: false, error: 'Internal error' })
+      body: JSON.stringify({ valid: false, error: err.message }),
     };
   }
 };
