@@ -1,47 +1,53 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
-  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore,
   doc,
-  setDoc,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import firebaseConfig from "./firestore.js";
+// Firebase config (replace this with your actual config)
+const firebaseConfig = {
+  apiKey: "AIzaSyBJxxcGhuYspiZ9HRAlZgihgXLaA2FjPXc",
+  authDomain: "coastalcouponverifier.firebaseapp.com",
+  projectId: "coastalcouponverifier",
+  storageBucket: "coastalcouponverifier.firebasestorage.app",
+  messagingSenderId: "189807704712",
+  appId: "1:189807704712:web:9427e68464115f388ebd3d"
+};
 
+// Init Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Signup handler
-export async function handleSignup(email, password, businessName, couponOffer, redemptionLimit, resetInterval) {
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  const uid = userCredential.user.uid;
+// On form submit
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
+  const errorDiv = document.getElementById('error-message');
 
-  // Save profile to Firestore
-  await setDoc(doc(db, "businessAccounts", uid), {
-    businessName,
-    couponOffer,
-    redemptionLimit,
-    resetInterval,
-    createdAt: serverTimestamp()
-  });
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
 
-  return uid;
-}
+    // Retrieve business name
+    const docRef = doc(db, 'businessAccounts', uid);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const businessName = docSnap.data().businessName;
+      sessionStorage.setItem('businessName', businessName);
+      window.location.href = 'dashboard.html';
+    } else {
+      errorDiv.textContent = 'No business account found.';
+    }
 
-// Login handler
-export async function handleLogin(email, password) {
-  const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  return userCredential.user.uid;
-}
-
-// Auth state change listener (optional)
-export function onAuthChange(callback) {
-  onAuthStateChanged(auth, callback);
-}
+  } catch (error) {
+    errorDiv.textContent = error.message;
+  }
+});
