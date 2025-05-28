@@ -1,15 +1,14 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
-  onAuthStateChanged,
-  signOut
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore,
   doc,
   getDoc,
   updateDoc,
-  setDoc,
+  deleteDoc,
   collection,
   addDoc,
   getDocs,
@@ -69,12 +68,11 @@ onAuthStateChanged(auth, async (user) => {
 document.getElementById("verifyBtn").addEventListener("click", async () => {
   const code = document.getElementById("codeInput").value.trim();
   const status = document.getElementById("redeemStatus");
-  const history = document.getElementById("redemptionHistory");
-  const editor = document.getElementById("redemptionEdit");
+  const history = document.getElementById("redemptionEdit");
+  const section = document.getElementById("redemptionSection");
   status.innerText = "";
   history.innerHTML = "";
-  editor.innerHTML = "";
-  editor.style.display = "none";
+  section.style.display = "none";
 
   if (!code) {
     status.innerText = "Please enter a code to verify.";
@@ -92,21 +90,22 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   const redemptions = codeSnap.data().redemptions || [];
   const used = redemptions.filter(r => r.business === currentBusiness);
 
-  lastVerifiedCode = code; // store it for editing logs
+  lastVerifiedCode = code;
 
   if (used.length > 0) {
-    status.innerText = "Code valid, previously redeemed:";
+    status.innerText = "✅ Valid code. Previously redeemed:";
     used.forEach(r => {
       const item = document.createElement("li");
       item.innerText = `${r.date}`;
       history.appendChild(item);
     });
   } else {
-    status.innerText = "Code valid and unused at your business.";
+    status.innerText = "✅ Valid code. Not yet redeemed at your business.";
   }
 
   document.getElementById("redeemBtn").disabled = false;
-  loadRedemptions(code); // show related logs after verification
+
+  await loadRedemptions(code); // show edit section
 });
 
 // Redeem Code
@@ -123,34 +122,39 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
   const codeSnap = await getDoc(codeRef);
   const existing = codeSnap.data().redemptions || [];
 
-  const newRedemption = {
+  const now = new Date();
+  const redemption = {
     business: currentBusiness,
-    date: new Date().toISOString(),
+    date: now.toLocaleDateString(),
+    time: now.toLocaleTimeString(),
+    status: "Redeemed",
     edited: false,
     notes: "",
     businessName: currentBusiness
   };
 
-  existing.push(newRedemption);
+  existing.push(redemption);
 
   await updateDoc(codeRef, { redemptions: existing });
 
   await addDoc(collection(db, `businessAccounts/${businessUID}/redemptions`), {
     code,
-    ...newRedemption,
+    ...redemption,
     timestamp: serverTimestamp()
   });
 
-  status.innerText = "Code redeemed successfully!";
+  status.innerText = "✅ Code redeemed successfully!";
   document.getElementById("redeemBtn").disabled = true;
-  loadRedemptions(code);
+
+  await loadRedemptions(code);
 });
 
-// Load redemptions filtered to the verified code
+// Load redemption logs
 async function loadRedemptions(codeToMatch) {
-  const historyDiv = document.getElementById("redemptionEdit");
-  historyDiv.innerHTML = "";
-  historyDiv.style.display = "block";
+  const container = document.getElementById("redemptionEdit");
+  const section = document.getElementById("redemptionSection");
+  container.innerHTML = "";
+  section.style.display = "block";
 
   const q = query(
     collection(db, `businessAccounts/${businessUID}/redemptions`),
@@ -160,25 +164,24 @@ async function loadRedemptions(codeToMatch) {
   const snapshot = await getDocs(q);
   snapshot.forEach(docSnap => {
     const data = docSnap.data();
+
     const div = document.createElement("div");
     div.innerHTML = `
-      <p><strong>Code:</strong> ${data.code}</p>
-      <p><strong>Date:</strong> ${data.date || data.timestamp.toDate().toISOString()}</p>
-      <p><strong>Notes:</strong> <input type="text" value="${data.notes}" id="note-${docSnap.id}"/></p>
-      <button onclick="updateNote('${docSnap.id}')">Save Note</button>
+      <p><strong>Date:</strong> ${data.date} <strong>Time:</strong> ${data.time} <strong>Status:</strong> ${data.status}
+      <button onclick="deleteRedemption('${docSnap.id}')">[DELETE]</button></p>
       <hr />
     `;
-    historyDiv.appendChild(div);
+    container.appendChild(div);
   });
 }
 
-// Scoped update
-window.updateNote = async function (docId) {
-  const noteVal = document.getElementById(`note-${docId}`).value;
+// Delete redemption entry
+window.deleteRedemption = async function (docId) {
+  const confirmDelete = confirm("Are you sure you want to delete this redemption?");
+  if (!confirmDelete) return;
+
   const docRef = doc(db, `businessAccounts/${businessUID}/redemptions/${docId}`);
-  await updateDoc(docRef, {
-    notes: noteVal,
-    edited: true
-  });
-  alert("Note updated.");
+  await deleteDoc(docRef);
+  alert("Redemption entry deleted.");
+  await loadRedemptions(lastVerifiedCode);
 };
