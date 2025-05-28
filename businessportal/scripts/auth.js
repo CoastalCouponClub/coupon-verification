@@ -1,16 +1,9 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {
-  getFirestore,
-  doc,
-  getDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
-// Firebase config (replace this with your actual config)
+// Firebase App (the core Firebase SDK) is always required and must be listed first
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+
+// TODO: Replace with your app's Firebase project configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBJxxcGhuYspiZ9HRAlZgihgXLaA2FjPXc",
   authDomain: "coastalcouponverifier.firebaseapp.com",
@@ -20,34 +13,21 @@ const firebaseConfig = {
   appId: "1:189807704712:web:9427e68464115f388ebd3d"
 };
 
-// Init Firebase
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
 
-// On form submit
+// Handle form submission
 document.getElementById('login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value.trim();
-  const errorDiv = document.getElementById('error-message');
 
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const uid = userCredential.user.uid;
-
-    // Retrieve business name
-    const docRef = doc(db, 'businessAccounts', uid);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      const businessName = docSnap.data().businessName;
-      sessionStorage.setItem('businessName', businessName);
-      window.location.href = 'dashboard.html';
-    } else {
-      errorDiv.textContent = 'No business account found.';
-    }
-
+    await signInWithEmailAndPassword(auth, email, password);
+    alert('Login successful!');
+    window.location.href = '/businessPortal/dashboard.html'; // Redirect to dashboard
   } catch (error) {
-    errorDiv.textContent = error.message;
+    alert('Error: ' + error.message);
   }
 });
