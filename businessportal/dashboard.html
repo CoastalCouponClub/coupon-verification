@@ -2,19 +2,20 @@
 <html>
 <head>
   <title>Business Dashboard</title>
-  <script src="/businessPortal/scripts/firebase-app.js"></script>
-  <script src="/businessPortal/scripts/firebase-auth.js"></script>
-  <script src="/businessPortal/scripts/firebase-firestore.js"></script>
-  <script src="/businessPortal/scripts/firestore.js"></script>
-  <script src="/businessPortal/scripts/dashboard.js" defer></script>
 </head>
 <body>
   <h1>Welcome to Your Dashboard</h1>
-  <p><strong>Business Name:</strong> <span id="businessName"></span></p>
-  <p><strong>Coupon Offer:</strong> <span id="couponOffer"></span></p>
-  <p><strong>Redemption Limit:</strong> <span id="redemptionLimit"></span></p>
-  <p><strong>Reset Interval:</strong> <span id="resetInterval"></span></p>
+  <div id="business-info"></div>
 
-  <button onclick="logout()">Logout</button>
+  <h2>Redeem a Customer Code</h2>
+  <input type="text" id="codeInput" placeholder="Enter customer code" />
+  <button onclick="redeemCode()">Redeem</button>
+  <div id="redeemStatus"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore-compat.js"></script>
+  <script src="scripts/firestore.js"></script>
+  <script src="scripts/dashboard.js"></script>
 </body>
 </html>
