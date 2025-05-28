@@ -1,38 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Business Dashboard</title>
+  <style>
+    #redeemSection, #redemptionHistoryContainer, #doneBtn {
+      display: none;
+    }
+    ul {
+      padding-left: 20px;
+    }
+  </style>
 </head>
 <body>
   <h1>Welcome to Your Business Portal</h1>
-
   <div id="business-info"></div>
 
   <h2>Verify a Customer Code</h2>
   <input type="text" id="codeInput" placeholder="Enter customer code" />
   <button id="verifyBtn">Verify Code</button>
 
-  <div id="redeemStatus" style="margin-top: 10px; font-weight: bold;"></div>
+  <div id="redeemSection">
+    <button id="redeemBtn">Redeem Code</button>
+  </div>
 
-  <ul id="redemptionHistory" style="margin-top: 10px;"></ul>
+  <p id="redeemStatus" style="font-weight: bold;"></p>
 
-  <button id="redeemBtn" disabled>Redeem Code</button>
+  <div id="redemptionHistoryContainer">
+    <h2>Redemption History</h2>
+    <ul id="redemptionHistory"></ul>
+  </div>
 
-<div id="redemptionSection" style="display: none;">
-  <h2>Past Redemptions</h2>
-  <div id="redemptionEdit"></div>
-</div>
+  <button id="doneBtn">Done</button>
 
-
-
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js" type="module"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js" type="module"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js" type="module"></script>
-
-  <!-- Main Dashboard Script -->
-  <script type="module" src="./scripts/dashboard.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore-compat.js"></script>
+  <script src="scripts/dashboard.js"></script>
 </body>
 </html>
