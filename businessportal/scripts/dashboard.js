@@ -157,7 +157,9 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   status.innerText = message;
   redeemBtn.disabled = true;
   redeemBtn.style.display = "inline-block";
+    console.log("Final status message:", message);
 }
+
 
 
   else {
