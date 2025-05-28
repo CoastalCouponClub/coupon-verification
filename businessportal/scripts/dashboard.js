@@ -143,25 +143,21 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   const limitReached = redemptionLimit !== "unlimited" &&
     inWindowRedemptions.length >= parseInt(redemptionLimit);
 
- if (limitReached) {
+  if (limitReached) {
   let message = `Code is valid. Redemption limit reached (${redemptionLimit}).`;
+console.log("RESET DEBUG — interval:", resetInterval, "validRedemptions:", validRedemptions);
 
-  if (resetInterval !== "none" && validRedemptions.length > 0) {
-    const firstRedemption = new Date(validRedemptions[0].date);
-    const nextReset = calculateResetDate(firstRedemption, resetInterval);
-    if (nextReset) {
-      nextReset.setHours(0, 0, 0, 0);
-      const formatted = nextReset.toLocaleDateString('en-US', { dateStyle: 'long' });
-      message += ` Try again after: ${formatted}`;
-    }
+ const nonDeletedRedemptions = validRedemptions.filter(r => !r.deleted);
+
+if (resetInterval !== "none" && validRedemptions.length > 0) {
+  const firstRedemption = new Date(validRedemptions[0].date);
+  resetDate = calculateResetDate(firstRedemption, resetInterval);
+  if (resetDate) {
+    resetDate.setHours(0, 0, 0, 0);
+    const formatted = resetDate.toLocaleDateString('en-US', { dateStyle: 'long' });
+    message += ` Try again after: ${formatted}`;
   }
-
-  console.log("Final status message:", message);
-  status.innerText = message;
-  redeemBtn.disabled = true;
-  redeemBtn.style.display = "inline-block";
 }
-
 
 
 
