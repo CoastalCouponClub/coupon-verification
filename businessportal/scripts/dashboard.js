@@ -36,10 +36,13 @@ const db = getFirestore(app);
 let currentBusiness = null;
 let businessUID = null;
 let redemptionLimit = null;
+let resetInterval = null;
+let lastVerifiedCode = null;
 
+// Helper: format date
 function formatDate(isoString) {
   const date = new Date(isoString);
-  return date.toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
+  return date.toLocaleDateString() + " " + date.toLocaleTimeString();
 }
 
 // Auth check
@@ -60,6 +63,7 @@ onAuthStateChanged(auth, async (user) => {
       currentBusiness = data.businessName;
       businessUID = uid;
       redemptionLimit = data.redemptionLimit;
+      resetInterval = data.resetInterval;
     } else {
       document.getElementById("business-info").innerText = "Business account not found.";
     }
@@ -68,19 +72,15 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// Verify code
+// Verify Code
 document.getElementById("verifyBtn").addEventListener("click", async () => {
   const code = document.getElementById("codeInput").value.trim();
   const status = document.getElementById("redeemStatus");
   const history = document.getElementById("redemptionHistory");
-  const redeemBtn = document.getElementById("redeemBtn");
-  const doneBtn = document.getElementById("doneBtn");
 
   status.innerText = "";
   history.innerHTML = "";
-  redeemBtn.style.display = "none";
-  redeemBtn.disabled = false;
-  doneBtn.style.display = "none";
+  lastVerifiedCode = null;
 
   if (!code) {
     status.innerText = "Please enter a code to verify.";
@@ -90,70 +90,41 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   const codeRef = doc(db, "verifiedCodes", code);
   const codeSnap = await getDoc(codeRef);
 
-  if (!codeSnap.exists() || !codeSnap.data().isValid) {
-    status.innerText = "Code not found or inactive.";
+  if (!codeSnap.exists() || codeSnap.data().isValid === false) {
+    status.innerText = "Invalid or inactive code.";
     return;
   }
 
-  const data = codeSnap.data();
-  const redemptions = data.redemptions || [];
-  const usedAtThisBusiness = redemptions.filter(r => r.business === currentBusiness && !r.deleted);
+  const redemptions = codeSnap.data().redemptions?.filter(r => !r.deleted && r.business === currentBusiness) || [];
 
-  const redemptionLimitReached =
-    redemptionLimit !== "unlimited" && usedAtThisBusiness.length >= parseInt(redemptionLimit);
-
-  status.innerText = "Code is valid.";
-
-  if (redemptionLimitReached) {
-    status.innerText += ` Redemption limit reached (${redemptionLimit}).`;
+  let limitReached = false;
+  if (redemptionLimit !== "unlimited" && redemptions.length >= parseInt(redemptionLimit)) {
+    status.innerText = `✅ Code is valid.\n⚠️ Redemption limit reached (${redemptionLimit}).`;
+    limitReached = true;
   } else {
-    redeemBtn.style.display = "inline-block";
-    redeemBtn.disabled = false;
+    status.innerText = "✅ Code is valid.";
   }
 
-  document.getElementById("verifyBtn").style.display = "none";
-  document.getElementById("redemptionHistorySection").style.display = "block";
-  doneBtn.style.display = "inline-block";
-
-  // Show redemption history
-  usedAtThisBusiness.forEach(r => {
+  redemptions.forEach(r => {
     const item = document.createElement("li");
     item.innerText = `• ${formatDate(r.date)} Status: Redeemed`;
-
-    const delBtn = document.createElement("button");
-    delBtn.className = "delete-button";
-    delBtn.innerText = "Delete";
-    delBtn.style.marginLeft = "10px";
-    delBtn.style.padding = "2px 8px";
-    delBtn.style.backgroundColor = "#ff4d4d";
-    delBtn.style.color = "#fff";
-    delBtn.style.border = "none";
-    delBtn.style.borderRadius = "4px";
-    delBtn.style.cursor = "pointer";
-
-    delBtn.onclick = async () => {
-      r.deleted = true;
-      const updatedRedemptions = redemptions.map(entry => entry === r ? r : entry);
-      await updateDoc(codeRef, { redemptions: updatedRedemptions });
-
-      const q = query(collection(db, `businessAccounts/${businessUID}/redemptions`), where("code", "==", code));
-      const docs = await getDocs(q);
-      docs.forEach(async d => {
-        await updateDoc(d.ref, { deleted: true });
-      });
-
-      item.remove();
-    };
-
-    item.appendChild(delBtn);
     history.appendChild(item);
   });
+
+  lastVerifiedCode = code;
+
+  // Show redeem + done, hide verify
+  document.getElementById("redeemBtn").style.display = limitReached ? "none" : "inline-block";
+  document.getElementById("verifyBtn").style.display = "none";
+  document.getElementById("doneBtn").style.display = "inline-block";
+  document.getElementById("editSection").style.display = "block";
 });
 
-// Redeem code
+// Redeem Code
 document.getElementById("redeemBtn").addEventListener("click", async () => {
-  const code = document.getElementById("codeInput").value.trim();
+  const code = lastVerifiedCode;
   const status = document.getElementById("redeemStatus");
+  const history = document.getElementById("redemptionHistory");
 
   if (!code || !currentBusiness) {
     status.innerText = "Missing code or business info.";
@@ -173,15 +144,14 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
     date: new Date().toISOString(),
     edited: false,
     notes: "",
-    businessName: currentBusiness
+    businessName: currentBusiness,
+    deleted: false
   };
 
   const existing = codeSnap.data().redemptions || [];
   existing.push(redemption);
 
-  await updateDoc(codeRef, {
-    redemptions: existing
-  });
+  await updateDoc(codeRef, { redemptions: existing });
 
   await addDoc(collection(db, `businessAccounts/${businessUID}/redemptions`), {
     code,
@@ -191,18 +161,47 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
   });
 
   status.innerText = "Redemption logged successfully!";
-  document.getElementById("redeemBtn").disabled = true;
+  document.getElementById("redeemBtn").style.display = "none";
+
+  // ✅ Add to UI immediately
+  const item = document.createElement("li");
+  item.innerText = `• ${formatDate(redemption.date)} Status: Redeemed`;
+
+  const delBtn = document.createElement("button");
+  delBtn.className = "delete-button";
+  delBtn.innerText = "Delete";
+  delBtn.style.marginLeft = "10px";
+  delBtn.style.padding = "2px 8px";
+  delBtn.style.backgroundColor = "#ff4d4d";
+  delBtn.style.color = "#fff";
+  delBtn.style.border = "none";
+  delBtn.style.borderRadius = "4px";
+  delBtn.style.cursor = "pointer";
+
+  delBtn.onclick = async () => {
+    redemption.deleted = true;
+    const updated = existing.map(r => r === redemption ? redemption : r);
+    await updateDoc(codeRef, { redemptions: updated });
+
+    const q = query(collection(db, `businessAccounts/${businessUID}/redemptions`), where("code", "==", code));
+    const docs = await getDocs(q);
+    docs.forEach(async d => await updateDoc(d.ref, { deleted: true }));
+
+    item.remove();
+  };
+
+  item.appendChild(delBtn);
+  history.appendChild(item);
 });
 
-// Done resets the portal
+// Done button resets the form
 document.getElementById("doneBtn").addEventListener("click", () => {
   document.getElementById("codeInput").value = "";
   document.getElementById("redeemStatus").innerText = "";
   document.getElementById("redemptionHistory").innerHTML = "";
-  document.getElementById("redemptionHistorySection").style.display = "none";
-
   document.getElementById("verifyBtn").style.display = "inline-block";
   document.getElementById("redeemBtn").style.display = "none";
-  document.getElementById("redeemBtn").disabled = true;
   document.getElementById("doneBtn").style.display = "none";
+  document.getElementById("editSection").style.display = "none";
+  lastVerifiedCode = null;
 });
