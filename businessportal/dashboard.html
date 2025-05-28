@@ -2,28 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Business Dashboard</title>
 </head>
 <body>
-  <h1>Welcome to Your Dashboard</h1>
+  <h1>Welcome to Your Business Portal</h1>
+
   <div id="business-info"></div>
 
-  <hr>
-
-  <h2>Redeem a Customer Code</h2>
+  <h2>Verify a Customer Code</h2>
   <input type="text" id="codeInput" placeholder="Enter customer code" />
   <button id="verifyBtn">Verify Code</button>
+
+  <div id="redeemStatus" style="margin-top: 10px; font-weight: bold;"></div>
+
+  <ul id="redemptionHistory" style="margin-top: 10px;"></ul>
+
   <button id="redeemBtn" disabled>Redeem Code</button>
 
-  <p id="redeemStatus" style="font-weight: bold;"></p>
-  <ul id="redemptionHistory"></ul>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js" type="module"></script>
 
-  <!-- Firebase Scripts -->
-  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
-  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
-
-  <!-- Firestore Config -->
+  <!-- Main Dashboard Script -->
   <script type="module" src="./scripts/dashboard.js"></script>
 </body>
 </html>
