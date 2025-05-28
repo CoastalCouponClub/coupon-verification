@@ -1,1 +1,33 @@
-<!DOCTYPE html><html><head><title>Sign Up</title></head><body><h1>Signup Page</h1></body></html>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Business Signup</title>
+</head>
+<body>
+  <h1>Sign Up</h1>
+  <form id="signup-form">
+    <input type="text" id="businessName" placeholder="Business Name" required /><br>
+    <input type="email" id="email" placeholder="Email" required /><br>
+    <input type="password" id="password" placeholder="Password" required /><br>
+    <input type="text" id="couponOffer" placeholder="Coupon Offer (e.g., 50% off)" required /><br>
+    
+    <label for="redemptionLimit">Redemption Limit:</label>
+    <select id="redemptionLimit">
+      <option value="1">1x</option>
+      <option value="2">2x</option>
+      <option value="unlimited">Unlimited</option>
+    </select><br>
+
+    <label for="resetInterval">Redemption Reset:</label>
+    <select id="resetInterval">
+      <option value="never">Never</option>
+      <option value="1 month">1 Month</option>
+      <option value="1 year">1 Year</option>
+    </select><br><br>
+
+    <button type="submit">Sign Up</button>
+  </form>
+
+  <script type="module" src="scripts/signup.js"></script>
+</body>
+</html>
