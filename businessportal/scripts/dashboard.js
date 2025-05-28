@@ -57,11 +57,14 @@ function calculateResetDate(startDate, interval) {
   if (!interval || interval === "none") return null;
   const date = new Date(startDate);
   date.setHours(0, 0, 0, 0);
-  if (interval === "daily") return addDays(date, 1);
-  if (interval === "weekly") return addDays(date, 7);
-  if (interval === "monthly") return addMonths(date, 1);
+
+  if (["monthly", "1 month"].includes(interval)) return addMonths(date, 1);
+  if (["weekly", "1 week"].includes(interval)) return addDays(date, 7);
+  if (["daily", "1 day"].includes(interval)) return addDays(date, 1);
+
   return null;
 }
+
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
