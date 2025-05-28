@@ -117,7 +117,10 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
 
   const data = codeSnap.data();
   const redemptions = data.redemptions || [];
-  const validRedemptions = redemptions.filter(r => r.business === currentBusiness && !r.deleted);
+  const validRedemptions = redemptions
+  .filter(r => r.business === currentBusiness && !r.deleted)
+  .sort((a, b) => new Date(a.date) - new Date(b.date));
+
 
   // Calculate valid redemption window
   let windowStart = null;
@@ -146,18 +149,16 @@ console.log("RESET DEBUG — interval:", resetInterval, "validRedemptions:", val
 
  const nonDeletedRedemptions = validRedemptions.filter(r => !r.deleted);
 
-if (resetInterval !== "none" && nonDeletedRedemptions.length > 0) {
-  const firstRedemption = new Date(nonDeletedRedemptions[0].date);
-
-  resetDate = calculateResetDate(firstRedemption, resetInterval); // <- REUSE let
+if (resetInterval !== "none" && validRedemptions.length > 0) {
+  const firstRedemption = new Date(validRedemptions[0].date);
+  resetDate = calculateResetDate(firstRedemption, resetInterval);
   if (resetDate) {
     resetDate.setHours(0, 0, 0, 0);
     const formatted = resetDate.toLocaleDateString('en-US', { dateStyle: 'long' });
     message += ` Try again after: ${formatted}`;
-    
-
   }
 }
+
 
 
   status.innerText = message;
