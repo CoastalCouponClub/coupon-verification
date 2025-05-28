@@ -216,6 +216,20 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
         redeemBtn.disabled = false;
         status.innerText = "✅ Code is valid and can be redeemed.";
       }
+// Hard delete subcollection entries for cleanliness
+const hardDeleteQuery = query(
+  collection(db, `businessAccounts/${businessUID}/redemptions`),
+  where("code", "==", code)
+);
+const matchingDocs = await getDocs(hardDeleteQuery);
+matchingDocs.forEach(async (d) => {
+  await updateDoc(d.ref, { deleted: true });
+  if (typeof d.ref.delete === "function") {
+    await d.ref.delete(); // Clean up Firestore doc
+  }
+});
+
+      
     };
 
     item.appendChild(delBtn);
@@ -312,6 +326,18 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
 
   status.innerText += message;
 }
+// Hard delete subcollection entries for cleanliness
+const hardDeleteQuery = query(
+  collection(db, `businessAccounts/${businessUID}/redemptions`),
+  where("code", "==", code)
+);
+const matchingDocs = await getDocs(hardDeleteQuery);
+matchingDocs.forEach(async (d) => {
+  await updateDoc(d.ref, { deleted: true });
+  if (typeof d.ref.delete === "function") {
+    await d.ref.delete(); // Clean up Firestore doc
+  }
+});
 
 
 });
