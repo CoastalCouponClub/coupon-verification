@@ -80,10 +80,34 @@
   <button id="exportBtn">Export Data</button>
 
   <!-- Firebase and App Scripts -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
-  <script type="module" src="scripts/dashboard.js"></script>
+ <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getAuth,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getFirestore,
+    doc,
+    getDoc,
+    updateDoc,
+    collection,
+    addDoc,
+    getDocs,
+    query,
+    where,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import {
+    getStorage,
+    ref as storageRef,
+    uploadBytes,
+    getDownloadURL
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+  import "/scripts/dashboard.js"; // Your script already re-imports everything and runs the app
+</script>
+
 
   <!-- EmailJS Integration -->
   <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
