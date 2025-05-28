@@ -1,5 +1,6 @@
-window.addEventListener("DOMContentLoaded", () => {
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+// dashboard.js
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
   onAuthStateChanged,
@@ -13,8 +14,8 @@ import {
   setDoc,
   collection,
   addDoc,
-  getDocs,
   deleteDoc,
+  getDocs,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -32,28 +33,41 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Globals
 let currentBusiness = null;
 let businessUID = null;
 let redemptionLimit = null;
 let resetInterval = null;
 let currentCode = null;
 
+const businessInfo = document.getElementById("business-info");
+const verifyBtn = document.getElementById("verifyBtn");
+const redeemBtn = document.getElementById("redeemBtn");
+const codeInput = document.getElementById("codeInput");
+const status = document.getElementById("redeemStatus");
+const redemptionHistory = document.getElementById("redemptionHistory");
+const redemptionHistorySection = document.getElementById("redemptionHistorySection");
+const doneBtn = document.getElementById("doneBtn");
+
+redeemBtn.style.display = "none";
+doneBtn.style.display = "none";
+redemptionHistorySection.style.display = "none";
+
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     const uid = user.uid;
+    businessUID = uid;
     const docRef = doc(db, "businessAccounts", uid);
-    const businessSnap = await getDoc(docRef);
-
-    if (businessSnap.exists()) {
-      const data = businessSnap.data();
-      document.getElementById("business-info").innerHTML = `
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      businessInfo.innerHTML = `
         <p><strong>Business Name:</strong> ${data.businessName}</p>
         <p><strong>Coupon Offer:</strong> ${data.couponOffer}</p>
         <p><strong>Redemption Limit:</strong> ${data.redemptionLimit}</p>
         <p><strong>Reset Interval:</strong> ${data.resetInterval}</p>
       `;
       currentBusiness = data.businessName;
-      businessUID = uid;
       redemptionLimit = data.redemptionLimit;
       resetInterval = data.resetInterval;
     }
@@ -62,22 +76,17 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// Hide redeem and history until verification
-document.getElementById("redeemBtn").style.display = "none";
-document.getElementById("doneBtn").style.display = "none";
-document.getElementById("redemptionSection").style.display = "none";
-
-// Verify Code
-document.getElementById("verifyBtn").addEventListener("click", async () => {
-  const code = document.getElementById("codeInput").value.trim();
-  const status = document.getElementById("redeemStatus");
-  const history = document.getElementById("redemptionHistory");
+verifyBtn.addEventListener("click", async () => {
+  const code = codeInput.value.trim();
+  currentCode = code;
   status.innerHTML = "";
-  history.innerHTML = "";
-  currentCode = null;
+  redemptionHistory.innerHTML = "";
+  redemptionHistorySection.style.display = "none";
+  redeemBtn.style.display = "none";
+  doneBtn.style.display = "none";
 
   if (!code) {
-    status.innerHTML = `<span style="color:red">Please enter a code.</span>`;
+    status.innerHTML = "Please enter a code.";
     return;
   }
 
@@ -85,40 +94,31 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   const codeSnap = await getDoc(codeRef);
 
   if (!codeSnap.exists() || !codeSnap.data().isValid) {
-    status.innerHTML = `<span style="color:red">❌ Code not found or inactive.</span>`;
+    status.innerHTML = "❌ Code not found or invalid.";
     return;
   }
 
-  const data = codeSnap.data();
-  const redemptions = data.redemptions || [];
-  const usedAtBusiness = redemptions.filter(r => r.business === currentBusiness && !r.deleted);
+  const redemptions = codeSnap.data().redemptions || [];
+  const used = redemptions.filter(r => r.business === currentBusiness);
+  const limitReached = redemptionLimit !== "unlimited" && used.length >= parseInt(redemptionLimit);
 
-  status.innerHTML = `<span style="color:green">✅ Code is valid.</span>`;
-
-  if (redemptionLimit !== "unlimited" && usedAtBusiness.length >= parseInt(redemptionLimit)) {
-    status.innerHTML += `<br><span style="color:orange">⚠️ Redemption limit reached (${redemptionLimit}).</span>`;
-    document.getElementById("redeemBtn").disabled = true;
+  status.innerHTML += `<p>✅ Code is valid.</p>`;
+  if (limitReached) {
+    status.innerHTML += `<p>⚠️ Redemption limit reached (${redemptionLimit}).</p>`;
+    redeemBtn.disabled = true;
   } else {
-    document.getElementById("redeemBtn").disabled = false;
+    redeemBtn.disabled = false;
   }
 
-  currentCode = code;
-  await showRedemptionHistory(code);
-  document.getElementById("redeemBtn").style.display = "inline-block";
-  document.getElementById("doneBtn").style.display = "inline-block";
-  document.getElementById("verifyBtn").style.display = "none";
-  document.getElementById("redemptionSection").style.display = "block";
+  renderRedemptionHistory(code);
+  redemptionHistorySection.style.display = "block";
+  redeemBtn.style.display = "inline-block";
+  verifyBtn.style.display = "none";
+  doneBtn.style.display = "inline-block";
 });
 
-// Redeem Code
-document.getElementById("redeemBtn").addEventListener("click", async () => {
-  if (!currentCode || !currentBusiness) return;
-
-  const codeRef = doc(db, "verifiedCodes", currentCode);
-  const codeSnap = await getDoc(codeRef);
-  const redemptions = codeSnap.data().redemptions || [];
-
-  const newRedemption = {
+redeemBtn.addEventListener("click", async () => {
+  const redemption = {
     business: currentBusiness,
     date: new Date().toISOString(),
     edited: false,
@@ -126,72 +126,63 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
     businessName: currentBusiness
   };
 
-  redemptions.push(newRedemption);
+  const codeRef = doc(db, "verifiedCodes", currentCode);
+  const snap = await getDoc(codeRef);
+  const existing = snap.data().redemptions || [];
+  existing.push(redemption);
 
-  await updateDoc(codeRef, {
-    redemptions
-  });
-
+  await updateDoc(codeRef, { redemptions: existing });
   await addDoc(collection(db, `businessAccounts/${businessUID}/redemptions`), {
     code: currentCode,
-    ...newRedemption,
+    ...redemption,
     timestamp: serverTimestamp()
   });
 
-  await showRedemptionHistory(currentCode);
+  renderRedemptionHistory(currentCode);
 });
 
-// Show Redemption History
-async function showRedemptionHistory(code) {
-  const history = document.getElementById("redemptionHistory");
-  history.innerHTML = "";
+async function renderRedemptionHistory(code) {
+  redemptionHistory.innerHTML = "";
 
-  const codeRef = doc(db, "verifiedCodes", code);
-  const codeSnap = await getDoc(codeRef);
-  const redemptions = codeSnap.data().redemptions || [];
+  const redemptionsRef = collection(db, `businessAccounts/${businessUID}/redemptions`);
+  const snapshot = await getDocs(redemptionsRef);
+  let count = 0;
 
-  const validRedemptions = redemptions.filter(r => r.business === currentBusiness && !r.deleted);
-  const deletedCount = redemptions.filter(r => r.business === currentBusiness && r.deleted).length;
-
-  validRedemptions.forEach((r, index) => {
-    const date = new Date(r.date).toLocaleString();
-    const entry = document.createElement("li");
-    entry.innerHTML = `Date: ${date} — Status: Redeemed 
-      <button style="margin-left:10px; background:#dc3545; color:white; border:none; padding:2px 6px; cursor:pointer;"
-        onclick="deleteRedemption('${code}', ${index})">Delete</button>`;
-    history.appendChild(entry);
+  snapshot.forEach(docSnap => {
+    const data = docSnap.data();
+    if (data.code === code && !data.deleted) {
+      const item = document.createElement("div");
+      item.innerHTML = `
+        <p><strong>Date:</strong> ${new Date(data.timestamp?.toDate()).toLocaleString() || data.date}</p>
+        <button style="background:red;color:white" onclick="deleteRedemption('${docSnap.id}')">Delete</button>
+      `;
+      redemptionHistory.appendChild(item);
+      count++;
+    }
   });
 
-  const redeemBtn = document.getElementById("redeemBtn");
-  if (redemptionLimit !== "unlimited" && validRedemptions.length >= parseInt(redemptionLimit)) {
+  // re-check limit after rendering
+  if (redemptionLimit !== "unlimited" && count >= parseInt(redemptionLimit)) {
     redeemBtn.disabled = true;
+    status.innerHTML += `<p>⚠️ Redemption limit reached (${redemptionLimit}).</p>`;
   } else {
     redeemBtn.disabled = false;
   }
 }
 
-// Delete Redemption
-window.deleteRedemption = async (code, index) => {
-  const codeRef = doc(db, "verifiedCodes", code);
-  const codeSnap = await getDoc(codeRef);
-  const redemptions = codeSnap.data().redemptions || [];
-
-  if (redemptions[index]) {
-    redemptions[index].deleted = true;
-    await updateDoc(codeRef, { redemptions });
-    await showRedemptionHistory(code);
-  }
+window.deleteRedemption = async (id) => {
+  const ref = doc(db, `businessAccounts/${businessUID}/redemptions/${id}`);
+  await updateDoc(ref, { deleted: true });
+  renderRedemptionHistory(currentCode);
 };
 
-// Reset dashboard for next customer
-document.getElementById("doneBtn").addEventListener("click", () => {
-  document.getElementById("codeInput").value = "";
-  document.getElementById("redeemStatus").innerHTML = "";
-  document.getElementById("redemptionHistory").innerHTML = "";
-  document.getElementById("redeemBtn").style.display = "none";
-  document.getElementById("doneBtn").style.display = "none";
-  document.getElementById("verifyBtn").style.display = "inline-block";
-  document.getElementById("redemptionSection").style.display = "none";
-});
-
+doneBtn.addEventListener("click", () => {
+  codeInput.value = "";
+  status.innerHTML = "";
+  redemptionHistory.innerHTML = "";
+  redeemBtn.style.display = "none";
+  redeemBtn.disabled = true;
+  verifyBtn.style.display = "inline-block";
+  redemptionHistorySection.style.display = "none";
+  doneBtn.style.display = "none";
 });
