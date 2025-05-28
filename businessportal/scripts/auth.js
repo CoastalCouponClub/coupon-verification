@@ -8,9 +8,12 @@ import {
   getFirestore,
   doc,
   setDoc,
-  serverTimestamp
+  serverTimestamp,
+  collection,
+  addDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBJxxcGhuYspiZ9HRAlZgihgXLaA2FjPXc",
   authDomain: "coastalcouponverifier.firebaseapp.com",
@@ -57,6 +60,7 @@ if (signupForm) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
 
+      // Store business metadata
       await setDoc(doc(db, "businessAccounts", uid), {
         businessName,
         email,
@@ -64,6 +68,13 @@ if (signupForm) {
         redemptionLimit,
         resetInterval,
         createdAt: serverTimestamp()
+      });
+
+      // Initialize redemptions subcollection with a dummy field for structure
+      const redemptionsRef = collection(db, "businessAccounts", uid, "redemptions");
+      await addDoc(redemptionsRef, {
+        initialized: true,
+        timestamp: serverTimestamp()
       });
 
       window.location.href = "/businessPortal/dashboard.html";
