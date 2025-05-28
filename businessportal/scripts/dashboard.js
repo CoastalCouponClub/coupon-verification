@@ -1,15 +1,13 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
-  onAuthStateChanged,
-  signOut
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore,
   doc,
   getDoc,
   updateDoc,
-  setDoc,
   collection,
   addDoc,
   getDocs,
@@ -36,13 +34,16 @@ const db = getFirestore(app);
 let currentBusiness = null;
 let businessUID = null;
 let redemptionLimit = null;
+let verifiedCodeRef = null;
+let verifiedRedemptions = [];
 
+// Format
 function formatDate(isoString) {
   const date = new Date(isoString);
   return date.toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
 }
 
-// Auth check
+// Auth
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     const uid = user.uid;
@@ -68,7 +69,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// Verify code
+// Verify
 document.getElementById("verifyBtn").addEventListener("click", async () => {
   const code = document.getElementById("codeInput").value.trim();
   const status = document.getElementById("redeemStatus");
@@ -79,7 +80,6 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   status.innerText = "";
   history.innerHTML = "";
   redeemBtn.style.display = "none";
-  redeemBtn.disabled = false;
   doneBtn.style.display = "none";
 
   if (!code) {
@@ -87,8 +87,8 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
     return;
   }
 
-  const codeRef = doc(db, "verifiedCodes", code);
-  const codeSnap = await getDoc(codeRef);
+  verifiedCodeRef = doc(db, "verifiedCodes", code);
+  const codeSnap = await getDoc(verifiedCodeRef);
 
   if (!codeSnap.exists() || !codeSnap.data().isValid) {
     status.innerText = "Code not found or inactive.";
@@ -96,61 +96,65 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   }
 
   const data = codeSnap.data();
-  const redemptions = data.redemptions || [];
-  const usedAtThisBusiness = redemptions.filter(r => r.business === currentBusiness && !r.deleted);
+  verifiedRedemptions = data.redemptions?.filter(r => r.business === currentBusiness && !r.deleted) || [];
 
-  const redemptionLimitReached =
-    redemptionLimit !== "unlimited" && usedAtThisBusiness.length >= parseInt(redemptionLimit);
+  let limitReached = redemptionLimit !== "unlimited" && verifiedRedemptions.length >= parseInt(redemptionLimit);
 
   status.innerText = "Code is valid.";
-
-  if (redemptionLimitReached) {
+  if (limitReached) {
     status.innerText += ` Redemption limit reached (${redemptionLimit}).`;
+    redeemBtn.disabled = true;
   } else {
-    redeemBtn.style.display = "inline-block";
     redeemBtn.disabled = false;
   }
 
+  redeemBtn.style.display = "inline-block";
+  doneBtn.style.display = "inline-block";
   document.getElementById("verifyBtn").style.display = "none";
   document.getElementById("redemptionHistorySection").style.display = "block";
-  doneBtn.style.display = "inline-block";
 
-  // Show redemption history
-  usedAtThisBusiness.forEach(r => {
+  renderRedemptionHistory();
+});
+
+// Render redemption history
+function renderRedemptionHistory() {
+  const history = document.getElementById("redemptionHistory");
+  history.innerHTML = "";
+
+  verifiedRedemptions.forEach((r, index) => {
     const item = document.createElement("li");
     item.innerText = `• ${formatDate(r.date)} Status: Redeemed`;
 
     const delBtn = document.createElement("button");
     delBtn.className = "delete-button";
     delBtn.innerText = "Delete";
-    delBtn.style.marginLeft = "10px";
-    delBtn.style.padding = "2px 8px";
-    delBtn.style.backgroundColor = "#ff4d4d";
-    delBtn.style.color = "#fff";
-    delBtn.style.border = "none";
-    delBtn.style.borderRadius = "4px";
-    delBtn.style.cursor = "pointer";
-
     delBtn.onclick = async () => {
       r.deleted = true;
-      const updatedRedemptions = redemptions.map(entry => entry === r ? r : entry);
-      await updateDoc(codeRef, { redemptions: updatedRedemptions });
+      verifiedRedemptions[index].deleted = true;
 
-      const q = query(collection(db, `businessAccounts/${businessUID}/redemptions`), where("code", "==", code));
+      const codeSnap = await getDoc(verifiedCodeRef);
+      const allRedemptions = codeSnap.data().redemptions || [];
+      allRedemptions[index].deleted = true;
+      await updateDoc(verifiedCodeRef, { redemptions: allRedemptions });
+
+      const q = query(collection(db, `businessAccounts/${businessUID}/redemptions`), where("code", "==", document.getElementById("codeInput").value));
       const docs = await getDocs(q);
       docs.forEach(async d => {
-        await updateDoc(d.ref, { deleted: true });
+        if (!d.data().deleted) {
+          await updateDoc(d.ref, { deleted: true });
+        }
       });
 
-      item.remove();
+      renderRedemptionHistory();
+      checkRedemptionLimit(); // recheck and re-enable redeem button if limit is now okay
     };
 
     item.appendChild(delBtn);
     history.appendChild(item);
   });
-});
+}
 
-// Redeem code
+// Redeem
 document.getElementById("redeemBtn").addEventListener("click", async () => {
   const code = document.getElementById("codeInput").value.trim();
   const status = document.getElementById("redeemStatus");
@@ -160,41 +164,34 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
     return;
   }
 
-  const codeRef = doc(db, "verifiedCodes", code);
-  const codeSnap = await getDoc(codeRef);
-
-  if (!codeSnap.exists()) {
-    status.innerText = "Code does not exist.";
-    return;
-  }
-
   const redemption = {
     business: currentBusiness,
     date: new Date().toISOString(),
     edited: false,
     notes: "",
-    businessName: currentBusiness
+    businessName: currentBusiness,
+    deleted: false
   };
 
+  const codeSnap = await getDoc(verifiedCodeRef);
   const existing = codeSnap.data().redemptions || [];
   existing.push(redemption);
-
-  await updateDoc(codeRef, {
-    redemptions: existing
-  });
+  await updateDoc(verifiedCodeRef, { redemptions: existing });
 
   await addDoc(collection(db, `businessAccounts/${businessUID}/redemptions`), {
     code,
     ...redemption,
-    timestamp: serverTimestamp(),
-    deleted: false
+    timestamp: serverTimestamp()
   });
 
+  verifiedRedemptions.push(redemption);
+  renderRedemptionHistory();
+  checkRedemptionLimit();
+
   status.innerText = "Redemption logged successfully!";
-  document.getElementById("redeemBtn").disabled = true;
 });
 
-// Done resets the portal
+// Reset portal
 document.getElementById("doneBtn").addEventListener("click", () => {
   document.getElementById("codeInput").value = "";
   document.getElementById("redeemStatus").innerText = "";
@@ -206,3 +203,19 @@ document.getElementById("doneBtn").addEventListener("click", () => {
   document.getElementById("redeemBtn").disabled = true;
   document.getElementById("doneBtn").style.display = "none";
 });
+
+// Helper to recheck redemption limit
+function checkRedemptionLimit() {
+  const redeemBtn = document.getElementById("redeemBtn");
+  const status = document.getElementById("redeemStatus");
+
+  const activeRedemptions = verifiedRedemptions.filter(r => !r.deleted);
+  const limitReached = redemptionLimit !== "unlimited" && activeRedemptions.length >= parseInt(redemptionLimit);
+
+  if (limitReached) {
+    redeemBtn.disabled = true;
+    status.innerText += ` Redemption limit reached (${redemptionLimit}).`;
+  } else {
+    redeemBtn.disabled = false;
+  }
+}
