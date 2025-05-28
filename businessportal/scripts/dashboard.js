@@ -141,14 +141,19 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
     inWindowRedemptions.length >= parseInt(redemptionLimit);
 
   if (limitReached) {
-    status.innerText = `Code is valid. Redemption limit reached (${redemptionLimit}).`;
-    redeemBtn.disabled = true;
-    redeemBtn.style.display = "inline-block";
-    if (resetDate) {
-      const next = resetDate.toLocaleDateString('en-US', { dateStyle: 'long' });
-      status.innerText += ` Try again after: ${next}`;
-    }
-  } else {
+  let message = `Code is valid. Redemption limit reached (${redemptionLimit}).`;
+  if (resetDate) {
+    const midnight = new Date(resetDate);
+    midnight.setHours(0, 0, 0, 0);
+    const next = midnight.toLocaleDateString('en-US', { dateStyle: 'long' });
+    message += ` Try again after: ${next}`;
+  }
+  status.innerText = message;
+  redeemBtn.disabled = true;
+  redeemBtn.style.display = "inline-block";
+}
+
+  else {
     status.innerText = "✅ Code is valid and can be redeemed.";
     redeemBtn.style.display = "inline-block";
     redeemBtn.disabled = false;
