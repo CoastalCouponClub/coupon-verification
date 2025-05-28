@@ -6,13 +6,28 @@
     #redeemSection, #redemptionHistorySection {
       display: none;
     }
+
     #codeInput, #verifyBtn, #redeemBtn {
       margin-right: 5px;
     }
+
     .delete-button {
       margin-left: 10px;
-      color: red;
+      padding: 2px 6px;
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 4px;
       cursor: pointer;
+      font-size: 0.85em;
+    }
+
+    .delete-button:hover {
+      background-color: #c0392b;
+    }
+
+    #redeemBtn, #doneBtn {
+      display: none;
     }
   </style>
 </head>
@@ -24,8 +39,8 @@
   <h2>Verify a Customer Code</h2>
   <input type="text" id="codeInput" placeholder="Enter customer code" />
   <button id="verifyBtn">Verify Code</button>
-  <button id="redeemBtn" disabled>Redeem Code</button>
-  <button id="doneBtn" style="display:none;">Done</button>
+  <button id="redeemBtn">Redeem Code</button>
+  <button id="doneBtn">Done</button>
 
   <p id="redeemStatus" style="font-weight: bold;"></p>
 
