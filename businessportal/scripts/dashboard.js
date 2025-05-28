@@ -93,8 +93,9 @@ verifyBtn.addEventListener("click", async () => {
   if (redemptionLimit !== "unlimited" && used.length >= parseInt(redemptionLimit)) {
     redeemStatus.innerText += ` Redemption limit reached (${redemptionLimit}).`;
   } else {
-    redeemBtn.disabled = false;
     redeemBtn.style.display = "inline-block";
+verifyBtn.style.display = "none";
+
   }
 
   redemptionHistorySection.style.display = "block";
