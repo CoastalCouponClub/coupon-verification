@@ -8,7 +8,6 @@ import {
   doc,
   getDoc,
   updateDoc,
-  deleteDoc, // ← add this
   collection,
   addDoc,
   getDocs,
@@ -82,7 +81,6 @@ onAuthStateChanged(auth, async (user) => {
       businessUID = uid;
       redemptionLimit = data.redemptionLimit;
       resetInterval = data.resetInterval;
-            await cleanSoftDeletedRedemptions(); // ⬅️ TEMP one-time cleanup call
 
     } else {
       document.getElementById("business-info").innerText = "Business account not found.";
@@ -343,20 +341,3 @@ async function cleanSoftDeletedRedemptions() {
       }
     }
   }
-
-  // Clean up businessAccounts/{uid}/redemptions subcollections
-  const businessRedemptionsRef = collection(db, `businessAccounts/${businessUID}/redemptions`);
-  const redemptionsSnap = await getDocs(businessRedemptionsRef);
-  for (const redemptionDoc of redemptionsSnap.docs) {
-    const data = redemptionDoc.data();
-    if (data.deleted === true) {
-      console.log(`Deleting subcollection doc ${redemptionDoc.id} (soft-deleted)`);
-      await updateDoc(redemptionDoc.ref, {
-        _deleted: true
-      });
-      await deleteDoc(redemptionDoc.ref); // ✅ Proper way
-    }
-  }
-
-  console.log("✅ Full cleanup complete.");
-}
