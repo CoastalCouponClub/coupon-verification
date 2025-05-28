@@ -1,33 +1,24 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Business Dashboard</title>
-  <script defer src="/businessPortal/scripts/firebase.js"></script>
-  <script defer src="/businessPortal/scripts/dashboard.js"></script>
+  <script type="module" src="../scripts/dashboard.js"></script>
 </head>
 <body>
-  <h1>Welcome, <span id="businessName"></span></h1>
+  <h1>Welcome to Your Business Dashboard</h1>
 
-  <section>
-    <h2>Your Coupon</h2>
-    <p><strong>Offer:</strong> <span id="couponOffer"></span></p>
-    <p><strong>Redemption Limit:</strong> <span id="redemptionLimit"></span></p>
-    <p><strong>Reset Interval:</strong> <span id="resetInterval"></span></p>
-  </section>
+  <div id="business-info">
+    <p><strong>Business Name:</strong> <span id="businessName">Loading...</span></p>
+    <p><strong>Coupon Offer:</strong> <span id="couponOffer">Loading...</span></p>
+    <p><strong>Redemption Limit:</strong> <span id="redemptionLimit">Loading...</span></p>
+    <p><strong>Reset Interval:</strong> <span id="resetInterval">Loading...</span></p>
+  </div>
 
-  <section>
-    <h2>Redeem a Code</h2>
-    <input type="text" id="customerCode" placeholder="Enter customer code" />
-    <button onclick="redeemCode()">Redeem</button>
-    <p id="redemptionStatus"></p>
-  </section>
+  <button id="logoutBtn">Logout</button>
 
-  <section>
-    <h2>Analytics</h2>
-    <p><strong>Total Redemptions:</strong> <span id="totalRedemptions">0</span></p>
-    <button onclick="exportRedemptions()">Export Data</button>
-  </section>
-
-  <button onclick="logout()">Log Out</button>
+  <h2>Redemptions</h2>
+  <ul id="redemptionLog"></ul>
 </body>
 </html>
