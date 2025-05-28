@@ -145,27 +145,32 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
 
   if (limitReached) {
   let message = `Code is valid. Redemption limit reached (${redemptionLimit}).`;
-console.log("RESET DEBUG — interval:", resetInterval, "validRedemptions:", validRedemptions);
 
- const nonDeletedRedemptions = validRedemptions.filter(r => !r.deleted);
+  console.log("RESET DEBUG — interval:", resetInterval, "validRedemptions:", validRedemptions);
 
-if (resetInterval !== "none" && validRedemptions.length > 0) {
-  const firstRedemption = new Date(validRedemptions[0].date);
-  resetDate = calculateResetDate(firstRedemption, resetInterval);
-  if (resetDate) {
-    resetDate.setHours(0, 0, 0, 0);
-    const formatted = resetDate.toLocaleDateString('en-US', { dateStyle: 'long' });
-    message += ` Try again after: ${formatted}`;
+  if (resetInterval !== "none" && validRedemptions.length > 0) {
+    const firstRedemption = new Date(validRedemptions[0].date);
+    const nextReset = calculateResetDate(firstRedemption, resetInterval);
+    console.log("CALCULATED RESET DATE:", nextReset);
+
+    if (nextReset && !isNaN(nextReset.getTime())) {
+      nextReset.setHours(0, 0, 0, 0);
+      const formatted = nextReset.toLocaleDateString('en-US', { dateStyle: 'long' });
+      message += ` Try again after: ${formatted}`;
+    } else {
+      console.warn("Reset date was not valid.");
+    }
+  } else {
+    console.warn("No valid redemptions or reset interval is 'none'");
   }
-}
 
-
-
-  status.innerText = message;
+  status.textContent = message;
   redeemBtn.disabled = true;
   redeemBtn.style.display = "inline-block";
-    console.log("Final status message:", message);
+
+  console.log("FINAL STATUS MESSAGE:", message);
 }
+
 
 
 
