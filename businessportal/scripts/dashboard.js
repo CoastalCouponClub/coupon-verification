@@ -8,6 +8,7 @@ import {
   doc,
   getDoc,
   updateDoc,
+  deleteDoc, // ← add this
   collection,
   addDoc,
   getDocs,
@@ -353,7 +354,7 @@ async function cleanSoftDeletedRedemptions() {
       await updateDoc(redemptionDoc.ref, {
         _deleted: true
       });
-      await redemptionDoc.ref.delete(); // PERMANENT DELETE
+      await deleteDoc(redemptionDoc.ref); // ✅ Proper way
     }
   }
 
