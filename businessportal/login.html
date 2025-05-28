@@ -1,1 +1,25 @@
-<!DOCTYPE html><html><head><title>Login</title></head><body><h1>Login Page</h1></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Business Login</title>
+</head>
+<body>
+  <h1>Business Portal Login</h1>
+
+  <form onsubmit="event.preventDefault(); login();">
+    <label for="email">Email:</label><br />
+    <input type="email" id="email" required /><br /><br />
+
+    <label for="password">Password:</label><br />
+    <input type="password" id="password" required /><br /><br />
+
+    <button type="submit">Login</button>
+  </form>
+
+  <p id="loginError" style="color: red;"></p>
+
+  <script type="module" src="./scripts/auth.js"></script>
+</body>
+</html>
