@@ -81,7 +81,6 @@ onAuthStateChanged(auth, async (user) => {
       businessUID = uid;
       redemptionLimit = data.redemptionLimit;
       resetInterval = data.resetInterval;
-
     } else {
       document.getElementById("business-info").innerText = "Business account not found.";
     }
@@ -325,19 +324,3 @@ document.getElementById("doneBtn").addEventListener("click", () => {
   document.getElementById("redeemBtn").disabled = true;
   document.getElementById("doneBtn").style.display = "none";
 });
-async function cleanSoftDeletedRedemptions() {
-  // Clean up verifiedCodes.redemptions
-  const codesSnapshot = await getDocs(collection(db, "verifiedCodes"));
-  for (const docSnap of codesSnapshot.docs) {
-    const data = docSnap.data();
-    if (data.redemptions) {
-      const originalLength = data.redemptions.length;
-      const cleaned = data.redemptions.filter(r => !r.deleted);
-      if (cleaned.length < originalLength) {
-        console.log(`Cleaning ${originalLength - cleaned.length} entries from verifiedCode ${docSnap.id}`);
-        await updateDoc(doc(db, "verifiedCodes", docSnap.id), {
-          redemptions: cleaned
-        });
-      }
-    }
-  }
