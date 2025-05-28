@@ -3,7 +3,7 @@
 <head>
   <title>Business Dashboard</title>
   <style>
-    #redeemSection, #redemptionHistorySection {
+    #redeemSection, #redemptionHistorySection, #analytics {
       display: none;
     }
 
@@ -29,6 +29,25 @@
     #redeemBtn, #doneBtn {
       display: none;
     }
+
+    #exportBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-weight: bold;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #exportBtn:hover {
+      background-color: #2980b9;
+    }
+
+    #analytics p {
+      margin: 4px 0;
+    }
   </style>
 </head>
 <body>
@@ -49,15 +68,27 @@
     <ul id="redemptionHistory"></ul>
   </div>
 
+  <!-- Optional: Analytics display section -->
+  <div id="analytics">
+    <h2>Analytics</h2>
+    <p><strong>Verified Customers:</strong> <span id="verifiedCount">0</span></p>
+    <p><strong>Total Redemptions:</strong> <span id="redemptionCount">0</span></p>
+    <p><strong>First Redemption:</strong> <span id="firstRedemption">N/A</span></p>
+    <p><strong>Most Recent Redemption:</strong> <span id="latestRedemption">N/A</span></p>
+  </div>
+
+  <button id="exportBtn">Export Data</button>
+
+  <!-- Firebase and App Scripts -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
   <script type="module" src="scripts/dashboard.js"></script>
 
+  <!-- EmailJS Integration -->
   <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
-<script>
-  emailjs.init("zOnUOx-UpvwgXCG8a"); // Replace with your EmailJS public key
-</script>
-
+  <script>
+    emailjs.init("zOnUOx-UpvwgXCG8a"); // Your public EmailJS key
+  </script>
 </body>
 </html>
