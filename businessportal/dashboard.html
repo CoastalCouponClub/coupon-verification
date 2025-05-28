@@ -49,40 +49,12 @@
     <ul id="redemptionHistory"></ul>
   </div>
 
-  <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import {
-    getFirestore,
-    doc,
-    getDoc,
-    updateDoc,
-    collection,
-    addDoc,
-    getDocs,
-    query,
-    where,
-    serverTimestamp
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  <!-- ✅ Firebase compat libraries -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-  import dashboard from './scripts/dashboard.js';
-  dashboard({
-    initializeApp,
-    getAuth,
-    onAuthStateChanged,
-    getFirestore,
-    doc,
-    getDoc,
-    updateDoc,
-    collection,
-    addDoc,
-    getDocs,
-    query,
-    where,
-    serverTimestamp
-  });
-</script>
-
-
+  <!-- Your dashboard logic -->
+  <script src="scripts/dashboard.js"></script>
 </body>
 </html>
