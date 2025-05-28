@@ -142,16 +142,22 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
 
   if (limitReached) {
   let message = `Code is valid. Redemption limit reached (${redemptionLimit}).`;
-  if (resetDate) {
-    const midnight = new Date(resetDate);
-    midnight.setHours(0, 0, 0, 0);
-    const next = midnight.toLocaleDateString('en-US', { dateStyle: 'long' });
-    message += ` Try again after: ${next}`;
+
+  if (resetInterval !== "none" && validRedemptions.length > 0) {
+    const firstRedemption = new Date(validRedemptions[0].date);
+    const resetDate = calculateResetDate(firstRedemption, resetInterval);
+    if (resetDate) {
+      resetDate.setHours(0, 0, 0, 0);
+      const formatted = resetDate.toLocaleDateString('en-US', { dateStyle: 'long' });
+      message += ` Try again after: ${formatted}`;
+    }
   }
+
   status.innerText = message;
   redeemBtn.disabled = true;
   redeemBtn.style.display = "inline-block";
 }
+
 
   else {
     status.innerText = "✅ Code is valid and can be redeemed.";
@@ -282,14 +288,17 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
 
   if (inWindow.length >= redemptionLimit) {
   let message = `\nRedemption limit reached (${redemptionLimit}).`;
-  if (nextReset) {
-    const midnight = new Date(nextReset);
-    midnight.setHours(0, 0, 0, 0);
-    const next = midnight.toLocaleDateString('en-US', { dateStyle: 'long' });
-    message += ` Try again after: ${next}`;
+
+  if (resetInterval !== "none" && nextReset) {
+    const resetMidnight = new Date(nextReset);
+    resetMidnight.setHours(0, 0, 0, 0);
+    const resetDateString = resetMidnight.toLocaleDateString('en-US', { dateStyle: 'long' });
+    message += ` Try again after: ${resetDateString}`;
   }
+
   status.innerText += message;
 }
+
 
 });
 
