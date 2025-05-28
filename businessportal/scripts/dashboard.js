@@ -8,6 +8,7 @@ import {
   doc,
   getDoc,
   updateDoc,
+  getStorage,
   collection,
   addDoc,
   getDocs,
@@ -39,6 +40,21 @@ function formatDate(isoString) {
   return date.toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
 }
 
+function generateCSV(data) {
+  const headers = ["Code", "Date", "Business", "Notes", "Edited"];
+  const rows = data.map(r => [
+    r.code,
+    new Date(r.date).toLocaleString(),
+    r.business,
+    r.notes || "",
+    r.edited ? "Yes" : "No"
+  ]);
+
+  const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+  return csvContent;
+}
+
+
 function addMonths(date, months) {
   const result = new Date(date);
   result.setMonth(result.getMonth() + months);
@@ -63,6 +79,23 @@ function calculateResetDate(startDate, interval) {
   if (["daily", "1 day"].includes(interval)) return addDays(date, 1);
 
   return null;
+}
+
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+async function uploadCSVFile(fileContent, filename) {
+  const storage = getStorage(app);
+  const fileRef = storageRef(storage, `exports/${filename}`);
+  const blob = new Blob([fileContent], { type: 'text/csv' });
+
+  await uploadBytes(fileRef, blob);
+  const url = await getDownloadURL(fileRef);
+  return url;
 }
 
 
@@ -331,4 +364,37 @@ document.getElementById("doneBtn").addEventListener("click", () => {
   document.getElementById("redeemBtn").style.display = "none";
   document.getElementById("redeemBtn").disabled = true;
   document.getElementById("doneBtn").style.display = "none";
+
+  document.getElementById("exportBtn").addEventListener("click", async () => {
+  const redemptionsSnapshot = await getDocs(
+    query(collection(db, `businessAccounts/${businessUID}/redemptions`))
+  );
+
+  const redemptions = [];
+  redemptionsSnapshot.forEach(doc => {
+    const data = doc.data();
+    if (!data.deleted) redemptions.push(data);
+  });
+
+  const csv = generateCSV(redemptions);
+  const fileUrl = await uploadCSVFile(csv, `${currentBusiness}_redemptions.csv`);
+
+  const templateParams = {
+    businessName: currentBusiness,
+    verifiedCount: new Set(redemptions.map(r => r.code)).size,
+    redemptionCount: redemptions.length,
+    firstRedemption: redemptions.length ? formatDate(redemptions[0].date) : "N/A",
+    latestRedemption: redemptions.length ? formatDate(redemptions[redemptions.length - 1].date) : "N/A",
+    fileUrl
+  };
+
+  emailjs.send("service_zn4nuce", "template_2zb6jgh", templateParams)
+    .then(() => {
+      alert("✅ Export sent to your email!");
+    }).catch(err => {
+      console.error("Email failed:", err);
+      alert("❌ Failed to send email.");
+    });
+});
+
 });
