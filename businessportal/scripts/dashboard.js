@@ -34,26 +34,29 @@ const db = getFirestore(app);
 let currentBusiness = null;
 let businessUID = null;
 let redemptionLimit = null;
-let resetInterval = null;
 
+// Auth & setup
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     const uid = user.uid;
+    businessUID = uid;
+
     const docRef = doc(db, "businessAccounts", uid);
     const businessSnap = await getDoc(docRef);
 
     if (businessSnap.exists()) {
       const data = businessSnap.data();
+      currentBusiness = data.businessName;
+      redemptionLimit = data.redemptionLimit;
+
       document.getElementById("business-info").innerHTML = `
         <p><strong>Business Name:</strong> ${data.businessName}</p>
         <p><strong>Coupon Offer:</strong> ${data.couponOffer}</p>
         <p><strong>Redemption Limit:</strong> ${data.redemptionLimit}</p>
         <p><strong>Reset Interval:</strong> ${data.resetInterval}</p>
       `;
-      currentBusiness = data.businessName;
-      businessUID = uid;
-      redemptionLimit = data.redemptionLimit;
-      resetInterval = data.resetInterval;
+
+      loadRedemptions(); // Load history
     } else {
       document.getElementById("business-info").innerText = "Business account not found.";
     }
@@ -62,26 +65,6 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// Helper to determine if reset interval has passed
-function isRedemptionReset(redemptionDate, resetInterval) {
-  const now = new Date();
-  const last = new Date(redemptionDate);
-
-  switch (resetInterval) {
-    case "1 month":
-      last.setMonth(last.getMonth() + 1);
-      break;
-    case "1 year":
-      last.setFullYear(last.getFullYear() + 1);
-      break;
-    case "never":
-    default:
-      return false;
-  }
-
-  return now >= last;
-}
-
 // Verify Code
 document.getElementById("verifyBtn").addEventListener("click", async () => {
   const code = document.getElementById("codeInput").value.trim();
@@ -89,7 +72,6 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   const history = document.getElementById("redemptionHistory");
   status.innerText = "";
   history.innerHTML = "";
-  document.getElementById("redeemBtn").disabled = true;
 
   if (!code) {
     status.innerText = "Please enter a code to verify.";
@@ -100,51 +82,22 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   const codeSnap = await getDoc(codeRef);
 
   if (!codeSnap.exists() || !codeSnap.data().isValid) {
-    status.innerText = "Invalid or inactive code.";
+    status.innerText = "Code not found or inactive.";
     return;
   }
 
   const redemptions = codeSnap.data().redemptions || [];
-  const redemptionsHere = redemptions.filter(r => r.business === currentBusiness);
+  const used = redemptions.filter(r => r.business === currentBusiness);
 
-  let recentCount = 0;
-  let nextEligibleDate = null;
-
-  for (const r of redemptionsHere) {
-    if (!isRedemptionReset(r.date, resetInterval)) {
-      recentCount++;
-    } else {
-      const lastDate = new Date(r.date);
-      if (!nextEligibleDate || lastDate > nextEligibleDate) {
-        nextEligibleDate = lastDate;
-      }
-    }
-  }
-
-  if (redemptionLimit !== "unlimited" && recentCount >= parseInt(redemptionLimit)) {
-    const futureReset = new Date(nextEligibleDate);
-    switch (resetInterval) {
-      case "1 month":
-        futureReset.setMonth(futureReset.getMonth() + 1);
-        break;
-      case "1 year":
-        futureReset.setFullYear(futureReset.getFullYear() + 1);
-        break;
-    }
-
-    status.innerText = `Redemption limit reached. Try again after: ${futureReset.toLocaleDateString()}`;
-    return;
-  }
-
-  if (redemptionsHere.length > 0) {
-    status.innerText = "Code is valid. Redemption history:";
-    redemptionsHere.forEach(r => {
+  if (used.length > 0) {
+    status.innerText = "Code valid, previously redeemed:";
+    used.forEach(r => {
       const item = document.createElement("li");
-      item.innerText = `• ${r.date}`;
+      item.innerText = `${r.date}`;
       history.appendChild(item);
     });
   } else {
-    status.innerText = "Code is valid and has not yet been redeemed here.";
+    status.innerText = "Code valid and unused at your business.";
   }
 
   document.getElementById("redeemBtn").disabled = false;
@@ -162,13 +115,9 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
 
   const codeRef = doc(db, "verifiedCodes", code);
   const codeSnap = await getDoc(codeRef);
+  const existing = codeSnap.data().redemptions || [];
 
-  if (!codeSnap.exists()) {
-    status.innerText = "Code not found.";
-    return;
-  }
-
-  const redemption = {
+  const newRedemption = {
     business: currentBusiness,
     date: new Date().toISOString(),
     edited: false,
@@ -176,25 +125,48 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
     businessName: currentBusiness
   };
 
-  const redemptions = codeSnap.data().redemptions || [];
-  redemptions.push(redemption);
+  existing.push(newRedemption);
 
-  await updateDoc(codeRef, {
-    redemptions
-  });
+  await updateDoc(codeRef, { redemptions: existing });
 
   await addDoc(collection(db, `businessAccounts/${businessUID}/redemptions`), {
     code,
-    ...redemption,
+    ...newRedemption,
     timestamp: serverTimestamp()
   });
 
   status.innerText = "Code redeemed successfully!";
+  loadRedemptions(); // Refresh history
   document.getElementById("redeemBtn").disabled = true;
-
-  // Auto-refresh redemption log
-  const history = document.getElementById("redemptionHistory");
-  const item = document.createElement("li");
-  item.innerText = `• ${redemption.date}`;
-  history.appendChild(item);
 });
+
+// Load Redemptions to Edit
+async function loadRedemptions() {
+  const historyDiv = document.getElementById("redemptionEdit");
+  historyDiv.innerHTML = "";
+
+  const snapshot = await getDocs(collection(db, `businessAccounts/${businessUID}/redemptions`));
+  snapshot.forEach(docSnap => {
+    const data = docSnap.data();
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <p><strong>Code:</strong> ${data.code}</p>
+      <p><strong>Date:</strong> ${data.date}</p>
+      <p><strong>Notes:</strong> <input type="text" value="${data.notes}" id="note-${docSnap.id}"/></p>
+      <button onclick="updateNote('${docSnap.id}')">Save Note</button>
+      <hr />
+    `;
+    historyDiv.appendChild(div);
+  });
+}
+
+// Update note function (window-scoped)
+window.updateNote = async function (docId) {
+  const noteVal = document.getElementById(`note-${docId}`).value;
+  const docRef = doc(db, `businessAccounts/${businessUID}/redemptions/${docId}`);
+  await updateDoc(docRef, {
+    notes: noteVal,
+    edited: true
+  });
+  alert("Note updated.");
+};
