@@ -109,7 +109,6 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   document.getElementById("redemptionHistorySection").style.display = "block";
   doneBtn.style.display = "inline-block";
 
-  // Show redemption history
   usedAtThisBusiness.forEach(r => {
     const item = document.createElement("li");
     item.innerText = `• ${formatDate(r.date)} Status: Redeemed`;
@@ -136,6 +135,7 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
 
       if (!limit) {
         redeemBtn.disabled = false;
+        redeemBtn.style.display = "inline-block";
         status.innerText = "✅ Code is valid and can be redeemed.";
       }
     };
@@ -149,6 +149,7 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
   const code = document.getElementById("codeInput").value.trim();
   const status = document.getElementById("redeemStatus");
   const history = document.getElementById("redemptionHistory");
+  const redeemBtn = document.getElementById("redeemBtn");
 
   if (!code || !currentBusiness) {
     status.innerText = "Missing code or business info.";
@@ -184,8 +185,6 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
   });
 
   status.innerText = "✅ Redemption logged successfully!";
-  status.style.color = "green";
-  status.style.fontWeight = "bold";
 
   const item = document.createElement("li");
   item.innerText = `• ${formatDate(redemption.date)} Status: Redeemed`;
@@ -210,7 +209,8 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
     const limit = redemptionLimit !== "unlimited" && remaining.length >= parseInt(redemptionLimit);
 
     if (!limit) {
-      document.getElementById("redeemBtn").disabled = false;
+      redeemBtn.disabled = false;
+      redeemBtn.style.display = "inline-block";
       status.innerText = "✅ Code is valid and can be redeemed.";
     }
   };
@@ -218,7 +218,15 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
   item.appendChild(delBtn);
   history.appendChild(item);
 
-  document.getElementById("redeemBtn").disabled = true;
+  redeemBtn.disabled = true;
+
+  // If redemption limit now met, update message
+  const usedAtThisBusiness = existing.filter(r => r.business === currentBusiness && !r.deleted);
+  const redemptionLimitReached =
+    redemptionLimit !== "unlimited" && usedAtThisBusiness.length >= parseInt(redemptionLimit);
+  if (redemptionLimitReached) {
+    status.innerText += " Redemption limit reached.";
+  }
 });
 
 document.getElementById("doneBtn").addEventListener("click", () => {
