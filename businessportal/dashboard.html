@@ -1,28 +1,22 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Business Dashboard</title>
-</head>
 <body>
   <h1>Welcome to Your Dashboard</h1>
   <div id="business-info"></div>
 
-  <h2>Redeem a Customer Code</h2>
-  <input type="text" id="codeInput" placeholder="Enter customer code" />
-  <button onclick="redeemCode()">Redeem</button>
-  <div id="redeemStatus"></div>
+  <h2>Verify Customer Code</h2>
+  <input type="text" id="couponCodeInput" placeholder="Enter customer code" />
+  <button onclick="verifyCode()">Verify</button>
 
+  <div id="verificationResult"></div>
+
+  <div id="redeemSection" style="display: none;">
+    <button onclick="redeemVerifiedCode()">Redeem Code</button>
+    <p id="redeemStatus" style="font-weight: bold;"></p>
+  </div>
+
+  <!-- Scripts -->
   <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore-compat.js"></script>
   <script src="scripts/firestore.js"></script>
   <script src="scripts/dashboard.js"></script>
-
-  <h2>Redeem a Customer Code</h2>
-<input type="text" id="couponCodeInput" placeholder="Enter customer code" />
-<button onclick="redeemCode()">Redeem</button>
-
-<p id="redeemStatus" style="font-weight: bold;"></p>
-
 </body>
-</html>
