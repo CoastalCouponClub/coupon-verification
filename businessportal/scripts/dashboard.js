@@ -24,7 +24,6 @@ const firebaseConfig = {
   storageBucket: "coastalcouponverifier.firebasestorage.app",
   messagingSenderId: "189807704712",
   appId: "1:189807704712:web:9427e68464115f388ebd3d"
-  // etc
 };
 
 const app = initializeApp(firebaseConfig);
@@ -35,6 +34,7 @@ const db = getFirestore(app);
 let currentBusiness = null;
 let businessUID = null;
 let redemptionLimit = null;
+let resetInterval = null;
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
@@ -53,6 +53,7 @@ onAuthStateChanged(auth, async (user) => {
       currentBusiness = data.businessName;
       businessUID = uid;
       redemptionLimit = data.redemptionLimit;
+      resetInterval = data.resetInterval;
     } else {
       document.getElementById("business-info").innerText = "Business account not found.";
     }
@@ -61,13 +62,34 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// Verify Code First
+// Helper to determine if reset interval has passed
+function isRedemptionReset(redemptionDate, resetInterval) {
+  const now = new Date();
+  const last = new Date(redemptionDate);
+
+  switch (resetInterval) {
+    case "1 month":
+      last.setMonth(last.getMonth() + 1);
+      break;
+    case "1 year":
+      last.setFullYear(last.getFullYear() + 1);
+      break;
+    case "never":
+    default:
+      return false;
+  }
+
+  return now >= last;
+}
+
+// Verify Code
 document.getElementById("verifyBtn").addEventListener("click", async () => {
   const code = document.getElementById("codeInput").value.trim();
   const status = document.getElementById("redeemStatus");
   const history = document.getElementById("redemptionHistory");
   status.innerText = "";
   history.innerHTML = "";
+  document.getElementById("redeemBtn").disabled = true;
 
   if (!code) {
     status.innerText = "Please enter a code to verify.";
@@ -77,29 +99,46 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   const codeRef = doc(db, "verifiedCodes", code);
   const codeSnap = await getDoc(codeRef);
 
-  if (!codeSnap.exists()) {
-    status.innerText = "Code not found or inactive.";
+  if (!codeSnap.exists() || !codeSnap.data().isValid) {
+    status.innerText = "Invalid or inactive code.";
     return;
   }
 
-  const data = codeSnap.data();
-  if (!data.isValid) {
-    status.innerText = "This code is marked as invalid.";
+  const redemptions = codeSnap.data().redemptions || [];
+  const redemptionsHere = redemptions.filter(r => r.business === currentBusiness);
+
+  let recentCount = 0;
+  let nextEligibleDate = null;
+
+  for (const r of redemptionsHere) {
+    if (!isRedemptionReset(r.date, resetInterval)) {
+      recentCount++;
+    } else {
+      const lastDate = new Date(r.date);
+      if (!nextEligibleDate || lastDate > nextEligibleDate) {
+        nextEligibleDate = lastDate;
+      }
+    }
+  }
+
+  if (redemptionLimit !== "unlimited" && recentCount >= parseInt(redemptionLimit)) {
+    const futureReset = new Date(nextEligibleDate);
+    switch (resetInterval) {
+      case "1 month":
+        futureReset.setMonth(futureReset.getMonth() + 1);
+        break;
+      case "1 year":
+        futureReset.setFullYear(futureReset.getFullYear() + 1);
+        break;
+    }
+
+    status.innerText = `Redemption limit reached. Try again after: ${futureReset.toLocaleDateString()}`;
     return;
   }
 
-  // Check redemption history
-  const redemptions = data.redemptions || [];
-  const usedAtThisBusiness = redemptions.filter(r => r.business === currentBusiness);
-
-  if (redemptionLimit !== "unlimited" && usedAtThisBusiness.length >= parseInt(redemptionLimit)) {
-    status.innerText = `Redemption limit reached at your business (${redemptionLimit}x).`;
-    return;
-  }
-
-  if (usedAtThisBusiness.length > 0) {
-    status.innerText = "Code is valid but has been redeemed here before:";
-    usedAtThisBusiness.forEach(r => {
+  if (redemptionsHere.length > 0) {
+    status.innerText = "Code is valid. Redemption history:";
+    redemptionsHere.forEach(r => {
       const item = document.createElement("li");
       item.innerText = `• ${r.date}`;
       history.appendChild(item);
@@ -125,7 +164,7 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
   const codeSnap = await getDoc(codeRef);
 
   if (!codeSnap.exists()) {
-    status.innerText = "Code does not exist.";
+    status.innerText = "Code not found.";
     return;
   }
 
@@ -137,21 +176,25 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
     businessName: currentBusiness
   };
 
-  // Update redemptions array
-  const existing = codeSnap.data().redemptions || [];
-  existing.push(redemption);
+  const redemptions = codeSnap.data().redemptions || [];
+  redemptions.push(redemption);
 
   await updateDoc(codeRef, {
-    redemptions: existing
+    redemptions
   });
 
-  // Also log to redemptions subcollection
   await addDoc(collection(db, `businessAccounts/${businessUID}/redemptions`), {
     code,
     ...redemption,
     timestamp: serverTimestamp()
   });
 
-  status.innerText = "Redemption logged successfully!";
+  status.innerText = "Code redeemed successfully!";
   document.getElementById("redeemBtn").disabled = true;
+
+  // Auto-refresh redemption log
+  const history = document.getElementById("redemptionHistory");
+  const item = document.createElement("li");
+  item.innerText = `• ${redemption.date}`;
+  history.appendChild(item);
 });
