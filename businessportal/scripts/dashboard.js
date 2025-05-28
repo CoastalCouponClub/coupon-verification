@@ -102,8 +102,11 @@ async function uploadCSVFile(fileContent, filename) {
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     const uid = user.uid;
+    window.businessEmail = user.email;
     const docRef = doc(db, "businessAccounts", uid);
     const businessSnap = await getDoc(docRef);
+    const userEmail = user.email;
+
 
     if (businessSnap.exists()) {
       const data = businessSnap.data();
