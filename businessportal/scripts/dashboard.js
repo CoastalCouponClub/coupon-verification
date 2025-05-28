@@ -281,12 +281,16 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
       });
 
   if (inWindow.length >= redemptionLimit) {
-    status.innerText += `\nRedemption limit reached (${redemptionLimit}).`;
-    if (nextReset) {
-      const next = new Date(nextReset).toLocaleDateString('en-US', { dateStyle: 'long' });
-      status.innerText += ` Try again after: ${next}`;
-    }
+  let message = `\nRedemption limit reached (${redemptionLimit}).`;
+  if (nextReset) {
+    const midnight = new Date(nextReset);
+    midnight.setHours(0, 0, 0, 0);
+    const next = midnight.toLocaleDateString('en-US', { dateStyle: 'long' });
+    message += ` Try again after: ${next}`;
   }
+  status.innerText += message;
+}
+
 });
 
 document.getElementById("doneBtn").addEventListener("click", () => {
