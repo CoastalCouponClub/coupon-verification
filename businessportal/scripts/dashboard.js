@@ -144,14 +144,15 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   let message = `Code is valid. Redemption limit reached (${redemptionLimit}).`;
 
   if (resetInterval !== "none" && validRedemptions.length > 0) {
-    const firstRedemption = new Date(validRedemptions[0].date);
-    const resetDate = calculateResetDate(firstRedemption, resetInterval);
-    if (resetDate) {
-      resetDate.setHours(0, 0, 0, 0);
-      const formatted = resetDate.toLocaleDateString('en-US', { dateStyle: 'long' });
-      message += ` Try again after: ${formatted}`;
-    }
+  const firstRedemption = new Date(validRedemptions[0].date);
+  resetDate = calculateResetDate(firstRedemption, resetInterval); // <- REUSE let
+  if (resetDate) {
+    resetDate.setHours(0, 0, 0, 0);
+    const formatted = resetDate.toLocaleDateString('en-US', { dateStyle: 'long' });
+    message += ` Try again after: ${formatted}`;
   }
+}
+
 
   status.innerText = message;
   redeemBtn.disabled = true;
