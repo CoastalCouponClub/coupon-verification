@@ -1,24 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Business Dashboard</title>
-  <script type="module" src="../scripts/dashboard.js"></script>
+  <script src="/businessPortal/scripts/firebase-app.js"></script>
+  <script src="/businessPortal/scripts/firebase-auth.js"></script>
+  <script src="/businessPortal/scripts/firebase-firestore.js"></script>
+  <script src="/businessPortal/scripts/firestore.js"></script>
+  <script src="/businessPortal/scripts/dashboard.js" defer></script>
 </head>
 <body>
-  <h1>Welcome to Your Business Dashboard</h1>
+  <h1>Welcome to Your Dashboard</h1>
+  <p><strong>Business Name:</strong> <span id="businessName"></span></p>
+  <p><strong>Coupon Offer:</strong> <span id="couponOffer"></span></p>
+  <p><strong>Redemption Limit:</strong> <span id="redemptionLimit"></span></p>
+  <p><strong>Reset Interval:</strong> <span id="resetInterval"></span></p>
 
-  <div id="business-info">
-    <p><strong>Business Name:</strong> <span id="businessName">Loading...</span></p>
-    <p><strong>Coupon Offer:</strong> <span id="couponOffer">Loading...</span></p>
-    <p><strong>Redemption Limit:</strong> <span id="redemptionLimit">Loading...</span></p>
-    <p><strong>Reset Interval:</strong> <span id="resetInterval">Loading...</span></p>
-  </div>
-
-  <button id="logoutBtn">Logout</button>
-
-  <h2>Redemptions</h2>
-  <ul id="redemptionLog"></ul>
+  <button onclick="logout()">Logout</button>
 </body>
 </html>
