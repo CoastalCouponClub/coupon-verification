@@ -1,1 +1,33 @@
-<!DOCTYPE html><html><head><title>Dashboard</title></head><body><h1>Business Dashboard</h1></body></html>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Business Dashboard</title>
+  <script defer src="/businessPortal/scripts/firebase.js"></script>
+  <script defer src="/businessPortal/scripts/dashboard.js"></script>
+</head>
+<body>
+  <h1>Welcome, <span id="businessName"></span></h1>
+
+  <section>
+    <h2>Your Coupon</h2>
+    <p><strong>Offer:</strong> <span id="couponOffer"></span></p>
+    <p><strong>Redemption Limit:</strong> <span id="redemptionLimit"></span></p>
+    <p><strong>Reset Interval:</strong> <span id="resetInterval"></span></p>
+  </section>
+
+  <section>
+    <h2>Redeem a Code</h2>
+    <input type="text" id="customerCode" placeholder="Enter customer code" />
+    <button onclick="redeemCode()">Redeem</button>
+    <p id="redemptionStatus"></p>
+  </section>
+
+  <section>
+    <h2>Analytics</h2>
+    <p><strong>Total Redemptions:</strong> <span id="totalRedemptions">0</span></p>
+    <button onclick="exportRedemptions()">Export Data</button>
+  </section>
+
+  <button onclick="logout()">Log Out</button>
+</body>
+</html>
