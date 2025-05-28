@@ -1,55 +1,56 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Business Dashboard</title>
   <style>
-    #redeemSection, #redemptionHistorySection {
-      display: none;
+    button {
+      margin: 5px;
+      padding: 8px 12px;
+      font-size: 1rem;
     }
 
-    #codeInput, #verifyBtn, #redeemBtn {
-      margin-right: 5px;
+    .redemption-item {
+      border: 1px solid #ccc;
+      padding: 8px;
+      margin: 6px 0;
+      border-radius: 4px;
     }
 
-    .delete-button {
-      margin-left: 10px;
-      padding: 2px 6px;
-      background-color: #e74c3c;
+    .redemption-item button {
+      background-color: red;
       color: white;
       border: none;
-      border-radius: 4px;
+      padding: 5px 10px;
+      margin-top: 4px;
       cursor: pointer;
-      font-size: 0.85em;
+      border-radius: 4px;
     }
 
-    .delete-button:hover {
-      background-color: #c0392b;
-    }
-
-    #redeemBtn, #doneBtn {
-      display: none;
+    .redemption-item button:hover {
+      background-color: darkred;
     }
   </style>
 </head>
 <body>
-  <h1>Welcome to Your Business Portal</h1>
-
+  <h1>Welcome to Your Dashboard</h1>
   <div id="business-info"></div>
 
-  <h2>Verify a Customer Code</h2>
+  <h2>Redeem a Customer Code</h2>
   <input type="text" id="codeInput" placeholder="Enter customer code" />
   <button id="verifyBtn">Verify Code</button>
   <button id="redeemBtn">Redeem Code</button>
   <button id="doneBtn">Done</button>
 
-  <p id="redeemStatus" style="font-weight: bold;"></p>
+  <div id="redeemStatus" style="margin-top: 10px; font-weight: bold;"></div>
 
   <div id="redemptionHistorySection">
-    <h2>Redemption History</h2>
-    <ul id="redemptionHistory"></ul>
+    <h3>Edit Past Redemptions</h3>
+    <div id="redemptionHistory"></div>
   </div>
 
-  <script type="module" src="scripts/dashboard.js"></script>
-
+  <!-- Firebase Scripts -->
+  <script type="module" src="dashboard.js"></script>
 </body>
 </html>
