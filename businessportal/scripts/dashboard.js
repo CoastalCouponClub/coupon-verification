@@ -1,4 +1,5 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+window.addEventListener("DOMContentLoaded", () => {
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
   onAuthStateChanged,
@@ -191,4 +192,6 @@ document.getElementById("doneBtn").addEventListener("click", () => {
   document.getElementById("doneBtn").style.display = "none";
   document.getElementById("verifyBtn").style.display = "inline-block";
   document.getElementById("redemptionSection").style.display = "none";
+});
+
 });
