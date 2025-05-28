@@ -13,6 +13,8 @@ import {
   collection,
   addDoc,
   getDocs,
+  query,
+  where,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -34,8 +36,8 @@ const db = getFirestore(app);
 let currentBusiness = null;
 let businessUID = null;
 let redemptionLimit = null;
+let lastVerifiedCode = null;
 
-// Auth & setup
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     const uid = user.uid;
@@ -55,8 +57,6 @@ onAuthStateChanged(auth, async (user) => {
         <p><strong>Redemption Limit:</strong> ${data.redemptionLimit}</p>
         <p><strong>Reset Interval:</strong> ${data.resetInterval}</p>
       `;
-
-      loadRedemptions(); // Load history
     } else {
       document.getElementById("business-info").innerText = "Business account not found.";
     }
@@ -70,8 +70,11 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   const code = document.getElementById("codeInput").value.trim();
   const status = document.getElementById("redeemStatus");
   const history = document.getElementById("redemptionHistory");
+  const editor = document.getElementById("redemptionEdit");
   status.innerText = "";
   history.innerHTML = "";
+  editor.innerHTML = "";
+  editor.style.display = "none";
 
   if (!code) {
     status.innerText = "Please enter a code to verify.";
@@ -89,6 +92,8 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   const redemptions = codeSnap.data().redemptions || [];
   const used = redemptions.filter(r => r.business === currentBusiness);
 
+  lastVerifiedCode = code; // store it for editing logs
+
   if (used.length > 0) {
     status.innerText = "Code valid, previously redeemed:";
     used.forEach(r => {
@@ -101,11 +106,12 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   }
 
   document.getElementById("redeemBtn").disabled = false;
+  loadRedemptions(code); // show related logs after verification
 });
 
 // Redeem Code
 document.getElementById("redeemBtn").addEventListener("click", async () => {
-  const code = document.getElementById("codeInput").value.trim();
+  const code = lastVerifiedCode;
   const status = document.getElementById("redeemStatus");
 
   if (!code || !currentBusiness) {
@@ -136,22 +142,28 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
   });
 
   status.innerText = "Code redeemed successfully!";
-  loadRedemptions(); // Refresh history
   document.getElementById("redeemBtn").disabled = true;
+  loadRedemptions(code);
 });
 
-// Load Redemptions to Edit
-async function loadRedemptions() {
+// Load redemptions filtered to the verified code
+async function loadRedemptions(codeToMatch) {
   const historyDiv = document.getElementById("redemptionEdit");
   historyDiv.innerHTML = "";
+  historyDiv.style.display = "block";
 
-  const snapshot = await getDocs(collection(db, `businessAccounts/${businessUID}/redemptions`));
+  const q = query(
+    collection(db, `businessAccounts/${businessUID}/redemptions`),
+    where("code", "==", codeToMatch)
+  );
+
+  const snapshot = await getDocs(q);
   snapshot.forEach(docSnap => {
     const data = docSnap.data();
     const div = document.createElement("div");
     div.innerHTML = `
       <p><strong>Code:</strong> ${data.code}</p>
-      <p><strong>Date:</strong> ${data.date}</p>
+      <p><strong>Date:</strong> ${data.date || data.timestamp.toDate().toISOString()}</p>
       <p><strong>Notes:</strong> <input type="text" value="${data.notes}" id="note-${docSnap.id}"/></p>
       <button onclick="updateNote('${docSnap.id}')">Save Note</button>
       <hr />
@@ -160,7 +172,7 @@ async function loadRedemptions() {
   });
 }
 
-// Update note function (window-scoped)
+// Scoped update
 window.updateNote = async function (docId) {
   const noteVal = document.getElementById(`note-${docId}`).value;
   const docRef = doc(db, `businessAccounts/${businessUID}/redemptions/${docId}`);
