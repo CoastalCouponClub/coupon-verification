@@ -144,14 +144,17 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   let message = `Code is valid. Redemption limit reached (${redemptionLimit}).`;
 console.log("RESET DEBUG — interval:", resetInterval, "validRedemptions:", validRedemptions);
 
-  if (resetInterval !== "none" && validRedemptions.length > 0) {
-  const firstRedemption = new Date(validRedemptions[0].date);
+ const nonDeletedRedemptions = validRedemptions.filter(r => !r.deleted);
+
+if (resetInterval !== "none" && nonDeletedRedemptions.length > 0) {
+  const firstRedemption = new Date(nonDeletedRedemptions[0].date);
+
   resetDate = calculateResetDate(firstRedemption, resetInterval); // <- REUSE let
   if (resetDate) {
     resetDate.setHours(0, 0, 0, 0);
     const formatted = resetDate.toLocaleDateString('en-US', { dateStyle: 'long' });
     message += ` Try again after: ${formatted}`;
-    console.log("RESET DATE CALCULATED:", resetDate);
+    
 
   }
 }
