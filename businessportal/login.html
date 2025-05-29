@@ -166,6 +166,14 @@
       <button onclick="window.location.href='signup.html'">Sign Up</button>
     </div>
   </div>
+<!-- Inject Firebase config from Netlify -->
+<script>
+  const config = decodeURIComponent('%FIREBASE_CLIENT_CONFIG%');
+  const script = document.createElement('script');
+  script.id = 'firebase-config';
+  script.setAttribute('data-config', config);
+  document.head.appendChild(script);
+</script>
 
   <script type="module" src="./scripts/auth.js"></script>
 </body>
