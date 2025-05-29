@@ -93,7 +93,7 @@ async function uploadCSVFile(fileContent, filename) {
   return await getDownloadURL(fileRef);
 }
 
-// Auth listener
+// Authentication
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     const uid = user.uid;
@@ -121,7 +121,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// EXPORT ANALYTICS HANDLER
+// Export analytics
 document.getElementById("exportBtn").addEventListener("click", async () => {
   const redemptionsSnapshot = await getDocs(
     query(collection(db, `businessAccounts/${businessUID}/redemptions`))
@@ -134,7 +134,6 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
   });
 
   redemptions.sort((a, b) => new Date(a.date) - new Date(b.date));
-
   const csv = generateCSV(redemptions);
   const fileUrl = await uploadCSVFile(csv, `${currentBusiness}_redemptions.csv`);
 
