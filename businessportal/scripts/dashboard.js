@@ -80,7 +80,8 @@ async function updateAnalytics() {
 }
 
 async function refreshRedemptionHistory() {
-  const snapshot = await getDocs(collection(db, `businessAccounts/${businessUID}/redemptions`));
+  const redemptionsRef = collection(db, `businessAccounts/${businessUID}/redemptions`);
+onSnapshot(redemptionsRef, (snapshot) => {
   const history = document.getElementById("redemptionHistory");
   history.innerHTML = "";
 
@@ -90,6 +91,8 @@ async function refreshRedemptionHistory() {
     if (!data.deleted) redemptions.push({ id: doc.id, ...data });
   });
 
+  updateAnalyticsSection(redemptions);
+
   redemptions.forEach(entry => {
     const li = document.createElement("li");
     li.textContent = `${entry.code} — ${formatDate(entry.date)}`;
@@ -97,14 +100,13 @@ async function refreshRedemptionHistory() {
     btn.className = "delete-button";
     btn.textContent = "Delete";
     btn.onclick = async () => {
-      await updateDoc(doc(db, `businessAccounts/${businessUID}/redemptions/${entry.id}`), { deleted: true });
-      refreshRedemptionHistory();
+      await deleteDoc(doc(db, `businessAccounts/${businessUID}/redemptions/${entry.id}`));
+      // Deletion will trigger this listener again automatically.
     };
     li.appendChild(btn);
     history.appendChild(li);
   });
 
-  updateAnalytics();
 }
 
 onAuthStateChanged(auth, async (user) => {
