@@ -104,7 +104,6 @@ async function refreshRedemptionHistory() {
     history.appendChild(li);
   });
 
-  document.getElementById("redemptionHistorySection").style.display = "block";
   updateAnalytics();
 }
 
@@ -226,6 +225,8 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
     status.innerText = "✅ Code is valid and can be redeemed.";
     redeemBtn.style.display = "inline-block";
     redeemBtn.disabled = false;
+
+
   }
 
   document.getElementById("verifyBtn").style.display = "none";
