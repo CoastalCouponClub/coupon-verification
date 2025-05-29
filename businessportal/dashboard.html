@@ -43,6 +43,15 @@
       max-width: 500px;
       text-align: left;
     }
+    
+.dashboard-container {
+  max-width: 960px;
+  margin: 20px auto;
+  padding: 20px;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  background-color: #fff;
+}
 
     #analytics p, #business-info p {
       margin: 8px 0;
@@ -130,9 +139,10 @@
   </style>
 </head>
 <body>
+  
   <h1>Welcome to Your Dashboard</h1>
-
-  <h2>Your Information</h2>
+<div class="dashboard-container">
+   <h2>Your Information</h2>
   <div id="business-info"></div>
 
   <p><a id="edit-offer-link" href="#" target="_blank">Edit Offer (Form Submission)</a></p>
@@ -160,6 +170,9 @@
     </p>
   </div>
 
+</div>
+
+ 
   <script type="module" src="scripts/dashboard.js"></script>
 </body>
 </html>
