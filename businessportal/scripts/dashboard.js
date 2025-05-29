@@ -62,35 +62,32 @@ function calculateResetDate(startDate, interval) {
 
 async function updateAnalytics() {
   const snap = await getDocs(collection(db, `businessAccounts/${businessUID}/redemptions`));
-  const redemptions = [];
+  const allRedemptions = [];
   snap.forEach(doc => {
-    redemptions.push(doc.data()); // Don't filter yet
+    allRedemptions.push(doc.data());
   });
 
-  // Count unique customer codes with at least one non-deleted log
-  const activeCodes = new Set();
-  const allCodesMap = {};
-
-  for (const r of redemptions) {
-    if (!r.code) continue;
-
-    if (!allCodesMap[r.code]) {
-      allCodesMap[r.code] = [];
+  // Group redemptions by code
+  const redemptionsByCode = {};
+  for (const entry of allRedemptions) {
+    if (!entry.code) continue;
+    if (!redemptionsByCode[entry.code]) {
+      redemptionsByCode[entry.code] = [];
     }
-    allCodesMap[r.code].push(r);
+    redemptionsByCode[entry.code].push(entry);
   }
 
-  for (const [code, logs] of Object.entries(allCodesMap)) {
-    if (logs.some(entry => !entry.deleted)) {
-      activeCodes.add(code);
-    }
-  }
+  // Count only codes that still have at least one non-deleted redemption
+  const activeCodes = Object.entries(redemptionsByCode).filter(([code, logs]) => {
+    return logs.some(log => !log.deleted);
+  }).map(([code]) => code);
 
-  const nonDeleted = redemptions.filter(r => !r.deleted);
+  const totalRedemptions = allRedemptions.filter(r => !r.deleted).length;
 
-  document.getElementById("activeCustomers").innerText = activeCodes.size;
-  document.getElementById("totalRedemptions").innerText = nonDeleted.length;
+  document.getElementById("activeCustomers").innerText = activeCodes.length;
+  document.getElementById("totalRedemptions").innerText = totalRedemptions;
 }
+
 
 async function refreshRedemptionHistory() {
   const snapshot = await getDocs(collection(db, `businessAccounts/${businessUID}/redemptions`));
