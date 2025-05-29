@@ -81,8 +81,7 @@ async function updateAnalytics() {
 }
 
 async function refreshRedemptionHistory() {
-  const redemptionsRef = collection(db, `businessAccounts/${businessUID}/redemptions`);
-onSnapshot(redemptionsRef, (snapshot) => {
+  const snapshot = await getDocs(collection(db, `businessAccounts/${businessUID}/redemptions`));
   const history = document.getElementById("redemptionHistory");
   history.innerHTML = "";
 
@@ -92,8 +91,6 @@ onSnapshot(redemptionsRef, (snapshot) => {
     if (!data.deleted) redemptions.push({ id: doc.id, ...data });
   });
 
-  updateAnalyticsSection(redemptions);
-
   redemptions.forEach(entry => {
     const li = document.createElement("li");
     li.textContent = `${entry.code} — ${formatDate(entry.date)}`;
@@ -101,13 +98,15 @@ onSnapshot(redemptionsRef, (snapshot) => {
     btn.className = "delete-button";
     btn.textContent = "Delete";
     btn.onclick = async () => {
-      await deleteDoc(doc(db, `businessAccounts/${businessUID}/redemptions/${entry.id}`));
-      // Deletion will trigger this listener again automatically.
+      await updateDoc(doc(db, `businessAccounts/${businessUID}/redemptions/${entry.id}`), { deleted: true });
+      refreshRedemptionHistory();
     };
     li.appendChild(btn);
     history.appendChild(li);
   });
 
+  document.getElementById("redemptionHistorySection").style.display = "block";
+  updateAnalytics();
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -228,8 +227,6 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
     status.innerText = "✅ Code is valid and can be redeemed.";
     redeemBtn.style.display = "inline-block";
     redeemBtn.disabled = false;
-
-
   }
 
   document.getElementById("verifyBtn").style.display = "none";
