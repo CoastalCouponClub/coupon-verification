@@ -15,7 +15,6 @@ import {
   where,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
 import {
   getStorage,
   ref as storageRef,
@@ -23,7 +22,6 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBJxxcGhuYspiZ9HRAlZgihgXLaA2FjPXc",
   authDomain: "coastalcouponverifier.firebaseapp.com",
@@ -93,7 +91,6 @@ async function uploadCSVFile(fileContent, filename) {
   return await getDownloadURL(fileRef);
 }
 
-// Authentication
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     const uid = user.uid;
@@ -121,7 +118,6 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// Export analytics
 document.getElementById("exportBtn").addEventListener("click", async () => {
   const redemptionsSnapshot = await getDocs(
     query(collection(db, `businessAccounts/${businessUID}/redemptions`))
@@ -134,6 +130,7 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
   });
 
   redemptions.sort((a, b) => new Date(a.date) - new Date(b.date));
+
   const csv = generateCSV(redemptions);
   const fileUrl = await uploadCSVFile(csv, `${currentBusiness}_redemptions.csv`);
 
