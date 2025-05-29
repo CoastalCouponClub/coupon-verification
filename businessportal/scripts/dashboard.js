@@ -100,9 +100,9 @@ onSnapshot(redemptionsRef, (snapshot) => {
     btn.className = "delete-button";
     btn.textContent = "Delete";
     btn.onclick = async () => {
-      await deleteDoc(doc(db, `businessAccounts/${businessUID}/redemptions/${entry.id}`));
-      // Deletion will trigger this listener again automatically.
-    };
+  await deleteDoc(doc(db, `businessAccounts/${businessUID}/redemptions/${entry.id}`));
+  await refreshRedemptionHistory(); // 👈 re-fetch and re-render the analytics + list
+};
     li.appendChild(btn);
     history.appendChild(li);
   });
