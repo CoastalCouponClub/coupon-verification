@@ -188,6 +188,10 @@
     </div>
   </div>
 
-  <script type="module" src="scripts/auth.js"></script>
+  <script id="firebase-config" data-config="%FIREBASE_CLIENT_CONFIG%">
+  window.firebaseConfig = JSON.parse(decodeURIComponent(document.currentScript.getAttribute('data-config')));
+</script>
+<script type="module" src="scripts/auth.js"></script>
+
 </body>
 </html>
