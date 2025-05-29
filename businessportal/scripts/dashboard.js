@@ -1,5 +1,4 @@
 
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
@@ -81,7 +80,8 @@ async function updateAnalytics() {
 }
 
 async function refreshRedemptionHistory() {
-  const snapshot = await getDocs(collection(db, `businessAccounts/${businessUID}/redemptions`));
+  const redemptionsRef = collection(db, `businessAccounts/${businessUID}/redemptions`);
+onSnapshot(redemptionsRef, (snapshot) => {
   const history = document.getElementById("redemptionHistory");
   history.innerHTML = "";
 
@@ -91,6 +91,8 @@ async function refreshRedemptionHistory() {
     if (!data.deleted) redemptions.push({ id: doc.id, ...data });
   });
 
+  updateAnalyticsSection(redemptions);
+
   redemptions.forEach(entry => {
     const li = document.createElement("li");
     li.textContent = `${entry.code} — ${formatDate(entry.date)}`;
@@ -98,15 +100,13 @@ async function refreshRedemptionHistory() {
     btn.className = "delete-button";
     btn.textContent = "Delete";
     btn.onclick = async () => {
-      await updateDoc(doc(db, `businessAccounts/${businessUID}/redemptions/${entry.id}`), { deleted: true });
-      refreshRedemptionHistory();
-    };
+  await deleteDoc(doc(db, `businessAccounts/${businessUID}/redemptions/${entry.id}`));
+  await refreshRedemptionHistory(); // 👈 re-fetch and re-render the analytics + list
+};
     li.appendChild(btn);
     history.appendChild(li);
   });
 
-  document.getElementById("redemptionHistorySection").style.display = "block";
-  updateAnalytics();
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -227,6 +227,8 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
     status.innerText = "✅ Code is valid and can be redeemed.";
     redeemBtn.style.display = "inline-block";
     redeemBtn.disabled = false;
+
+
   }
 
   document.getElementById("verifyBtn").style.display = "none";
