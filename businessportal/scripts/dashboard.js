@@ -13,6 +13,7 @@ import {
   getDocs,
   query,
   where,
+  deleteDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
@@ -91,6 +92,7 @@ async function uploadCSVFile(fileContent, filename) {
   return await getDownloadURL(fileRef);
 }
 
+// Auth Listener
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     const uid = user.uid;
@@ -110,6 +112,10 @@ onAuthStateChanged(auth, async (user) => {
       businessUID = uid;
       redemptionLimit = data.redemptionLimit;
       resetInterval = data.resetInterval;
+
+      document.getElementById("verifyBtn").addEventListener("click", verifyCode);
+      document.getElementById("redeemBtn").addEventListener("click", redeemCode);
+      document.getElementById("doneBtn").addEventListener("click", () => location.reload());
     } else {
       document.getElementById("business-info").innerText = "Business account not found.";
     }
@@ -117,6 +123,92 @@ onAuthStateChanged(auth, async (user) => {
     window.location.href = "login.html";
   }
 });
+
+async function verifyCode() {
+  const code = document.getElementById("codeInput").value.trim();
+  const status = document.getElementById("redeemStatus");
+  const redeemBtn = document.getElementById("redeemBtn");
+  const historySection = document.getElementById("redemptionHistorySection");
+  const historyList = document.getElementById("redemptionHistory");
+
+  if (!code) return;
+
+  const verifiedDoc = await getDoc(doc(db, "verifiedCodes", code));
+  if (!verifiedDoc.exists()) {
+    status.innerText = "❌ Invalid code.";
+    return;
+  }
+
+  const redemptionsSnapshot = await getDocs(
+    query(collection(db, `businessAccounts/${businessUID}/redemptions`), where("code", "==", code))
+  );
+
+  const allRedemptions = [];
+  redemptionsSnapshot.forEach(doc => {
+    const data = doc.data();
+    if (!data.deleted) allRedemptions.push({ id: doc.id, ...data });
+  });
+
+  const inWindowRedemptions = allRedemptions.filter(entry => {
+    const date = new Date(entry.date);
+    const resetDate = calculateResetDate(date, resetInterval);
+    return !resetDate || resetDate > new Date();
+  });
+
+  let message = `✅ Code is valid.`;
+  const limitReached = redemptionLimit !== "unlimited" && inWindowRedemptions.length >= parseInt(redemptionLimit);
+
+  if (limitReached) {
+    message += ` Redemption limit reached (${redemptionLimit}).`;
+    const mostRecent = inWindowRedemptions[inWindowRedemptions.length - 1];
+    const resetDate = calculateResetDate(mostRecent.date, resetInterval);
+    if (resetDate) {
+      message += ` Try again after: ${resetDate.toLocaleDateString('en-US', { dateStyle: 'long' })}`;
+    }
+    redeemBtn.disabled = true;
+  } else {
+    redeemBtn.disabled = false;
+  }
+
+  status.innerText = message;
+  redeemBtn.style.display = "inline-block";
+  historySection.style.display = "block";
+  historyList.innerHTML = "";
+
+  allRedemptions.forEach(r => {
+    const item = document.createElement("li");
+    item.innerText = `${formatDate(r.date)} — ${r.notes || "No notes"}`;
+    const delBtn = document.createElement("button");
+    delBtn.innerText = "Delete";
+    delBtn.className = "delete-button";
+    delBtn.onclick = async () => {
+      await deleteDoc(doc(db, `businessAccounts/${businessUID}/redemptions/${r.id}`));
+      location.reload();
+    };
+    item.appendChild(delBtn);
+    historyList.appendChild(item);
+  });
+}
+
+async function redeemCode() {
+  const code = document.getElementById("codeInput").value.trim();
+  const status = document.getElementById("redeemStatus");
+
+  if (!code) return;
+
+  await addDoc(collection(db, `businessAccounts/${businessUID}/redemptions`), {
+    code,
+    business: currentBusiness,
+    date: new Date().toISOString(),
+    edited: false,
+    deleted: false,
+    notes: ""
+  });
+
+  status.innerText = "✅ Code redeemed successfully!";
+  document.getElementById("doneBtn").style.display = "inline-block";
+  document.getElementById("redeemBtn").style.display = "none";
+}
 
 document.getElementById("exportBtn").addEventListener("click", async () => {
   const redemptionsSnapshot = await getDocs(
@@ -130,7 +222,6 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
   });
 
   redemptions.sort((a, b) => new Date(a.date) - new Date(b.date));
-
   const csv = generateCSV(redemptions);
   const fileUrl = await uploadCSVFile(csv, `${currentBusiness}_redemptions.csv`);
 
