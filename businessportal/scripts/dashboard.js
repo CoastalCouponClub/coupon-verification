@@ -115,9 +115,6 @@ async function refreshRedemptionHistory() {
     li.appendChild(btn);
     history.appendChild(li);
   });
-
-  document.getElementById("redemptionHistorySection").style.display = "block";
-  document.getElementById("analytics").style.display = "block";
 }
 
 function resetDashboard() {
@@ -126,7 +123,6 @@ function resetDashboard() {
   document.getElementById("doneBtn").style.display = "none";
   document.getElementById("verifyBtn").style.display = "inline-block";
   document.getElementById("redeemStatus").innerText = "";
-  document.getElementById("redemptionHistory").innerHTML = "";
   document.getElementById("redemptionHistorySection").style.display = "none";
 }
 
@@ -136,7 +132,6 @@ onAuthStateChanged(auth, async user => {
   const uid = user.uid;
   window.businessEmail = user.email;
   const snap = await getDoc(doc(db, "businessAccounts", uid));
-
   if (!snap.exists()) return;
 
   const data = snap.data();
@@ -153,15 +148,11 @@ onAuthStateChanged(auth, async user => {
   `;
 
   refreshRedemptionHistory();
+  document.getElementById("analytics").style.display = "block";
 });
 
 document.getElementById("verifyBtn").addEventListener("click", async () => {
   const code = document.getElementById("codeInput").value.trim();
-  const status = document.getElementById("redeemStatus");
-  const redeemBtn = document.getElementById("redeemBtn");
-  const doneBtn = document.getElementById("doneBtn");
-  const verifyBtn = document.getElementById("verifyBtn");
-
   if (!code) return alert("Please enter a code.");
 
   const q = query(collection(db, `businessAccounts/${businessUID}/redemptions`), where("code", "==", code));
@@ -173,33 +164,31 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   });
 
   const now = new Date();
-  const validRedemptions = redemptions.filter(r => {
+  const valid = redemptions.filter(r => {
     if (!resetInterval) return true;
-    const resetDate = addInterval(new Date(r.date), resetInterval);
+    const rDate = new Date(r.date);
+    const resetDate = addInterval(rDate, resetInterval);
     return now < resetDate;
   });
 
-  const limitReached = redemptionLimit && validRedemptions.length >= redemptionLimit;
+  const status = document.getElementById("redeemStatus");
+  const redeemBtn = document.getElementById("redeemBtn");
+  const doneBtn = document.getElementById("doneBtn");
 
-  document.getElementById("redemptionHistorySection").style.display = "block";
-
-  if (limitReached) {
+  if (redemptionLimit && valid.length >= redemptionLimit) {
     const last = redemptions[redemptions.length - 1];
-    const resetDate = addInterval(new Date(last.date), resetInterval);
-    status.innerText = `❌ Redemption limit reached (${redemptionLimit}). Try again after: ${formatDate(resetDate)}`;
+    const nextReset = addInterval(new Date(last.date), resetInterval);
+    status.innerText = `❌ Redemption limit reached. Try again after ${formatDate(nextReset)}`;
     redeemBtn.disabled = true;
-    redeemBtn.style.opacity = 0.5;
   } else {
-    status.innerText = "✅ Code verified and ready to redeem.";
+    status.innerText = `✅ Code verified and ready to redeem.`;
     redeemBtn.disabled = false;
-    redeemBtn.style.opacity = 1;
   }
 
+  document.getElementById("redemptionHistorySection").style.display = "block";
   redeemBtn.style.display = "inline-block";
   doneBtn.style.display = "inline-block";
-  verifyBtn.style.display = "none";
-
-  refreshRedemptionHistory();
+  document.getElementById("verifyBtn").style.display = "none";
 });
 
 document.getElementById("redeemBtn").addEventListener("click", async () => {
@@ -215,7 +204,31 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
     notes: ""
   });
 
-  document.getElementById("redeemStatus").innerText = "✅ Code redeemed successfully!";
+  const q = query(collection(db, `businessAccounts/${businessUID}/redemptions`), where("code", "==", code));
+  const snap = await getDocs(q);
+  const redemptions = [];
+  snap.forEach(doc => {
+    const data = doc.data();
+    if (!data.deleted) redemptions.push(data);
+  });
+
+  const valid = redemptions.filter(r => {
+    if (!resetInterval) return true;
+    const rDate = new Date(r.date);
+    const resetDate = addInterval(rDate, resetInterval);
+    return new Date() < resetDate;
+  });
+
+  const status = document.getElementById("redeemStatus");
+  status.innerText = "✅ Code redeemed successfully!";
+
+  if (redemptionLimit && valid.length >= redemptionLimit) {
+    const last = redemptions[redemptions.length - 1];
+    const nextReset = addInterval(new Date(last.date), resetInterval);
+    status.innerText += `\n❌ Redemption limit reached. Try again after ${formatDate(nextReset)}`;
+    document.getElementById("redeemBtn").disabled = true;
+  }
+
   refreshRedemptionHistory();
 });
 
