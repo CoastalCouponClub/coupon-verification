@@ -244,12 +244,11 @@
   </style>
 
   <!-- Inject Firebase config from Netlify into global window object -->
-<script>
-  window.firebaseConfig = JSON.parse(decodeURIComponent('%FIREBASE_CLIENT_CONFIG%'));
+<script id="firebase-config" data-config="%FIREBASE_CLIENT_CONFIG%">
+  window.firebaseConfig = JSON.parse(decodeURIComponent(document.currentScript.getAttribute('data-config')));
 </script>
-
-<!-- Now load your dashboard logic -->
 <script type="module" src="scripts/dashboard.js"></script>
+
 
 
 </head>
