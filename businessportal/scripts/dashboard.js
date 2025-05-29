@@ -22,7 +22,6 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBJxxcGhuYspiZ9HRAlZgihgXLaA2FjPXc",
   authDomain: "coastalcouponverifier.firebaseapp.com",
@@ -41,11 +40,14 @@ let currentBusiness = null;
 let businessUID = null;
 let redemptionLimit = null;
 let resetInterval = null;
-window.businessEmail = null;
 
-function formatDate(dateString) {
-  const date = new Date(dateString);
-  return isNaN(date) ? "Invalid Date" : date.toLocaleString("en-US", { dateStyle: "short", timeStyle: "short" });
+function formatDate(isoString) {
+  try {
+    const date = new Date(isoString);
+    return isNaN(date) ? "Invalid Date" : date.toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
+  } catch {
+    return "Invalid Date";
+  }
 }
 
 function generateCSV(data) {
@@ -63,9 +65,7 @@ function generateCSV(data) {
 async function uploadCSVFile(fileContent, filename) {
   const fileRef = storageRef(storage, `exports/${filename}`);
   const blob = new Blob([fileContent], { type: 'text/csv' });
-
   console.log("Uploading CSV file...", filename, blob);
-
   try {
     await uploadBytes(fileRef, blob);
     console.log("Upload successful. Fetching download URL...");
@@ -76,23 +76,20 @@ async function uploadCSVFile(fileContent, filename) {
   }
 }
 
-async function loadAnalyticsData() {
-  const redemptionsSnapshot = await getDocs(
-    query(collection(db, `businessAccounts/${businessUID}/redemptions`))
-  );
-
+async function refreshAnalytics() {
+  const snapshot = await getDocs(query(collection(db, `businessAccounts/${businessUID}/redemptions`)));
   const redemptions = [];
-  redemptionsSnapshot.forEach(doc => {
+  snapshot.forEach(doc => {
     const data = doc.data();
     if (!data.deleted) redemptions.push(data);
   });
 
   redemptions.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  document.getElementById("verifiedCount").textContent = new Set(redemptions.map(r => r.code)).size;
-  document.getElementById("redemptionCount").textContent = redemptions.length;
-  document.getElementById("firstRedemption").textContent = redemptions.length ? formatDate(redemptions[0].date) : "N/A";
-  document.getElementById("latestRedemption").textContent = redemptions.length ? formatDate(redemptions[redemptions.length - 1].date) : "N/A";
+  document.getElementById("verifiedCount").innerText = new Set(redemptions.map(r => r.code)).size;
+  document.getElementById("redemptionCount").innerText = redemptions.length;
+  document.getElementById("firstRedemption").innerText = redemptions.length ? formatDate(redemptions[0].date) : "N/A";
+  document.getElementById("latestRedemption").innerText = redemptions.length ? formatDate(redemptions[redemptions.length - 1].date) : "N/A";
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -114,9 +111,8 @@ onAuthStateChanged(auth, async (user) => {
       businessUID = uid;
       redemptionLimit = data.redemptionLimit;
       resetInterval = data.resetInterval;
-
       document.getElementById("analytics").style.display = "block";
-      await loadAnalyticsData();
+      refreshAnalytics();
     } else {
       document.getElementById("business-info").innerText = "Business account not found.";
     }
@@ -125,47 +121,92 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-document.getElementById("verifyBtn").addEventListener("click", () => {
+document.getElementById("verifyBtn").addEventListener("click", async () => {
   const code = document.getElementById("codeInput").value.trim();
-  if (!code) return alert("Please enter a customer code.");
-  alert(`✅ Code "${code}" is valid (simulated).`);
+  const status = document.getElementById("redeemStatus");
+  if (!code) {
+    status.innerText = "❌ Please enter a code.";
+    return;
+  }
+
+  const verifiedDoc = await getDoc(doc(db, "verifiedCodes", code));
+  if (!verifiedDoc.exists()) {
+    status.innerText = "❌ Invalid code.";
+    return;
+  }
+
+  const redemptionsRef = collection(db, `businessAccounts/${businessUID}/redemptions`);
+  const snapshot = await getDocs(query(redemptionsRef, where("code", "==", code), where("deleted", "==", false)));
+  const redemptionCount = snapshot.size;
+
+  if (redemptionLimit && redemptionCount >= redemptionLimit) {
+    status.innerText = `✅ Code valid, but redemption limit reached.`;
+  } else {
+    status.innerText = "✅ Code is valid!";
+    document.getElementById("redeemBtn").style.display = "inline";
+  }
+
+  document.getElementById("doneBtn").style.display = "inline";
+  refreshAnalytics();
+});
+
+document.getElementById("redeemBtn").addEventListener("click", async () => {
+  const code = document.getElementById("codeInput").value.trim();
+  const status = document.getElementById("redeemStatus");
+  try {
+    await addDoc(collection(db, `businessAccounts/${businessUID}/redemptions`), {
+      code,
+      business: currentBusiness,
+      date: new Date().toISOString(),
+      edited: false,
+      deleted: false,
+      notes: ""
+    });
+    status.innerText = "✅ Code redeemed successfully!";
+    refreshAnalytics();
+  } catch (err) {
+    console.error(err);
+    status.innerText = "❌ Error redeeming code.";
+  }
+});
+
+document.getElementById("doneBtn").addEventListener("click", () => {
+  document.getElementById("codeInput").value = "";
+  document.getElementById("redeemStatus").innerText = "";
+  document.getElementById("redeemBtn").style.display = "none";
+  document.getElementById("doneBtn").style.display = "none";
 });
 
 document.getElementById("exportBtn").addEventListener("click", async () => {
-  try {
-    const redemptionsSnapshot = await getDocs(
-      query(collection(db, `businessAccounts/${businessUID}/redemptions`))
-    );
+  const snapshot = await getDocs(query(collection(db, `businessAccounts/${businessUID}/redemptions`)));
+  const redemptions = [];
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    if (!data.deleted) redemptions.push(data);
+  });
+  redemptions.sort((a, b) => new Date(a.date) - new Date(b.date));
+  const csv = generateCSV(redemptions);
+  const fileUrl = await uploadCSVFile(csv, `${currentBusiness}_redemptions.csv`);
 
-    const redemptions = [];
-    redemptionsSnapshot.forEach(doc => {
-      const data = doc.data();
-      if (!data.deleted) redemptions.push(data);
-    });
+  const templateParams = {
+    businessName: currentBusiness,
+    verifiedCount: new Set(redemptions.map(r => r.code)).size,
+    redemptionCount: redemptions.length,
+    firstRedemption: redemptions.length ? formatDate(redemptions[0].date) : "N/A",
+    latestRedemption: redemptions.length ? formatDate(redemptions[redemptions.length - 1].date) : "N/A",
+    fileUrl,
+    to_email: window.businessEmail
+  };
 
-    redemptions.sort((a, b) => new Date(a.date) - new Date(b.date));
-    const csv = generateCSV(redemptions);
-    const fileUrl = await uploadCSVFile(csv, `${currentBusiness}_redemptions.csv`);
-
-    const templateParams = {
-      businessName: currentBusiness,
-      verifiedCount: new Set(redemptions.map(r => r.code)).size,
-      redemptionCount: redemptions.length,
-      firstRedemption: redemptions.length ? formatDate(redemptions[0].date) : "N/A",
-      latestRedemption: redemptions.length ? formatDate(redemptions[redemptions.length - 1].date) : "N/A",
-      fileUrl,
-      to_email: window.businessEmail
-    };
-
-    if (window.emailjs) {
-      await window.emailjs.send("service_zn4nuce", "template_2zb6jgh", templateParams);
-      alert("✅ Export sent to your email!");
-    } else {
-      console.error("EmailJS not initialized");
-      alert("❌ EmailJS not loaded.");
-    }
-  } catch (error) {
-    console.error("Export Error:", error);
-    alert("❌ Export failed. Check console for details.");
+  if (window.emailjs) {
+    window.emailjs.send("service_zn4nuce", "template_2zb6jgh", templateParams)
+      .then(() => alert("✅ Export sent to your email!"))
+      .catch(err => {
+        console.error("EmailJS Error:", err);
+        alert("❌ Failed to send email.");
+      });
+  } else {
+    console.error("EmailJS not initialized");
+    alert("❌ EmailJS not loaded.");
   }
 });
