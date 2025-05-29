@@ -13,7 +13,8 @@ import {
   getDocs,
   query,
   where,
-  serverTimestamp
+  serverTimestamp,
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
   getStorage,
@@ -22,6 +23,7 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBJxxcGhuYspiZ9HRAlZgihgXLaA2FjPXc",
   authDomain: "coastalcouponverifier.firebaseapp.com",
@@ -41,13 +43,22 @@ let businessUID = null;
 let redemptionLimit = null;
 let resetInterval = null;
 
-function formatDate(isoString) {
+// Helpers
+function formatDate(date) {
   try {
-    const date = new Date(isoString);
-    return isNaN(date) ? "Invalid Date" : date.toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
+    const d = new Date(date);
+    return isNaN(d) ? "Invalid Date" : d.toLocaleString();
   } catch {
     return "Invalid Date";
   }
+}
+
+function addInterval(date, interval) {
+  const d = new Date(date);
+  if (interval === "daily") d.setDate(d.getDate() + 1);
+  if (interval === "weekly") d.setDate(d.getDate() + 7);
+  if (interval === "monthly") d.setMonth(d.getMonth() + 1);
+  return d;
 }
 
 function generateCSV(data) {
@@ -65,148 +76,168 @@ function generateCSV(data) {
 async function uploadCSVFile(fileContent, filename) {
   const fileRef = storageRef(storage, `exports/${filename}`);
   const blob = new Blob([fileContent], { type: 'text/csv' });
-  console.log("Uploading CSV file...", filename, blob);
-  try {
-    await uploadBytes(fileRef, blob);
-    console.log("Upload successful. Fetching download URL...");
-    return await getDownloadURL(fileRef);
-  } catch (error) {
-    console.error("UPLOAD ERROR:", error);
-    throw error;
-  }
+  await uploadBytes(fileRef, blob);
+  return await getDownloadURL(fileRef);
 }
 
-async function refreshAnalytics() {
-  const snapshot = await getDocs(query(collection(db, `businessAccounts/${businessUID}/redemptions`)));
+function updateAnalyticsSection(redemptions) {
+  const uniqueCodes = new Set(redemptions.map(r => r.code));
+  const sorted = redemptions.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  document.getElementById("verifiedCount").innerText = uniqueCodes.size;
+  document.getElementById("redemptionCount").innerText = redemptions.length;
+  document.getElementById("firstRedemption").innerText = redemptions.length ? formatDate(sorted[0].date) : "N/A";
+  document.getElementById("latestRedemption").innerText = redemptions.length ? formatDate(sorted[sorted.length - 1].date) : "N/A";
+}
+
+async function refreshRedemptionHistory() {
+  const snapshot = await getDocs(collection(db, `businessAccounts/${businessUID}/redemptions`));
+  const history = document.getElementById("redemptionHistory");
+  history.innerHTML = "";
+
   const redemptions = [];
   snapshot.forEach(doc => {
+    const data = doc.data();
+    if (!data.deleted) redemptions.push({ id: doc.id, ...data });
+  });
+
+  updateAnalyticsSection(redemptions);
+
+  redemptions.forEach(entry => {
+    const li = document.createElement("li");
+    li.textContent = `${entry.code} — ${formatDate(entry.date)}`;
+    const btn = document.createElement("button");
+    btn.className = "delete-button";
+    btn.textContent = "Delete";
+    btn.onclick = async () => {
+      await deleteDoc(doc(db, `businessAccounts/${businessUID}/redemptions/${entry.id}`));
+      refreshRedemptionHistory();
+    };
+    li.appendChild(btn);
+    history.appendChild(li);
+  });
+
+  document.getElementById("redemptionHistorySection").style.display = "block";
+  document.getElementById("analytics").style.display = "block";
+}
+
+function resetDashboard() {
+  document.getElementById("codeInput").value = "";
+  document.getElementById("redeemBtn").style.display = "none";
+  document.getElementById("doneBtn").style.display = "none";
+  document.getElementById("verifyBtn").style.display = "inline-block";
+  document.getElementById("redeemStatus").innerText = "";
+  document.getElementById("redemptionHistory").innerHTML = "";
+}
+
+// Auth and UI
+onAuthStateChanged(auth, async user => {
+  if (!user) return window.location.href = "login.html";
+
+  const uid = user.uid;
+  window.businessEmail = user.email;
+  const snap = await getDoc(doc(db, "businessAccounts", uid));
+
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+  currentBusiness = data.businessName;
+  businessUID = uid;
+  redemptionLimit = data.redemptionLimit;
+  resetInterval = data.resetInterval;
+
+  document.getElementById("business-info").innerHTML = `
+    <p><strong>Business Name:</strong> ${data.businessName}</p>
+    <p><strong>Coupon Offer:</strong> ${data.couponOffer}</p>
+    <p><strong>Redemption Limit:</strong> ${data.redemptionLimit}</p>
+    <p><strong>Reset Interval:</strong> ${data.resetInterval}</p>
+  `;
+
+  refreshRedemptionHistory();
+});
+
+// Button Handlers
+document.getElementById("verifyBtn").addEventListener("click", async () => {
+  const code = document.getElementById("codeInput").value.trim();
+  if (!code) return alert("Please enter a code.");
+
+  const q = query(collection(db, `businessAccounts/${businessUID}/redemptions`), where("code", "==", code));
+  const snap = await getDocs(q);
+  const redemptions = [];
+  snap.forEach(doc => {
     const data = doc.data();
     if (!data.deleted) redemptions.push(data);
   });
 
-  redemptions.sort((a, b) => new Date(a.date) - new Date(b.date));
+  const now = new Date();
+  const validRedemptions = redemptions.filter(r => {
+    if (!resetInterval) return true;
+    const resetDate = addInterval(new Date(r.date), resetInterval);
+    return now < resetDate;
+  });
 
-  document.getElementById("verifiedCount").innerText = new Set(redemptions.map(r => r.code)).size;
-  document.getElementById("redemptionCount").innerText = redemptions.length;
-  document.getElementById("firstRedemption").innerText = redemptions.length ? formatDate(redemptions[0].date) : "N/A";
-  document.getElementById("latestRedemption").innerText = redemptions.length ? formatDate(redemptions[redemptions.length - 1].date) : "N/A";
-}
+  const limitReached = redemptionLimit && validRedemptions.length >= redemptionLimit;
 
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    const uid = user.uid;
-    window.businessEmail = user.email;
-    const docRef = doc(db, "businessAccounts", uid);
-    const businessSnap = await getDoc(docRef);
-
-    if (businessSnap.exists()) {
-      const data = businessSnap.data();
-      document.getElementById("business-info").innerHTML = `
-        <p><strong>Business Name:</strong> ${data.businessName}</p>
-        <p><strong>Coupon Offer:</strong> ${data.couponOffer}</p>
-        <p><strong>Redemption Limit:</strong> ${data.redemptionLimit}</p>
-        <p><strong>Reset Interval:</strong> ${data.resetInterval}</p>
-      `;
-      currentBusiness = data.businessName;
-      businessUID = uid;
-      redemptionLimit = data.redemptionLimit;
-      resetInterval = data.resetInterval;
-      document.getElementById("analytics").style.display = "block";
-      refreshAnalytics();
-    } else {
-      document.getElementById("business-info").innerText = "Business account not found.";
-    }
-  } else {
-    window.location.href = "login.html";
-  }
-});
-
-document.getElementById("verifyBtn").addEventListener("click", async () => {
-  const code = document.getElementById("codeInput").value.trim();
   const status = document.getElementById("redeemStatus");
-  if (!code) {
-    status.innerText = "❌ Please enter a code.";
-    return;
-  }
-
-  const verifiedDoc = await getDoc(doc(db, "verifiedCodes", code));
-  if (!verifiedDoc.exists()) {
-    status.innerText = "❌ Invalid code.";
-    return;
-  }
-
-  const redemptionsRef = collection(db, `businessAccounts/${businessUID}/redemptions`);
-  const snapshot = await getDocs(query(redemptionsRef, where("code", "==", code), where("deleted", "==", false)));
-  const redemptionCount = snapshot.size;
-
-  if (redemptionLimit && redemptionCount >= redemptionLimit) {
-    status.innerText = `✅ Code valid, but redemption limit reached.`;
+  if (limitReached) {
+    const next = addInterval(new Date(redemptions[redemptions.length - 1].date), resetInterval);
+    status.innerText = `❌ Redemption limit reached. Try again after ${formatDate(next)}`;
+    document.getElementById("redeemBtn").disabled = true;
   } else {
-    status.innerText = "✅ Code is valid!";
-    document.getElementById("redeemBtn").style.display = "inline";
+    status.innerText = `✅ Code verified and ready to redeem.`;
+    document.getElementById("redeemBtn").disabled = false;
   }
 
-  document.getElementById("doneBtn").style.display = "inline";
-  refreshAnalytics();
+  document.getElementById("redeemBtn").style.display = "inline-block";
+  document.getElementById("doneBtn").style.display = "inline-block";
+  document.getElementById("verifyBtn").style.display = "none";
+  refreshRedemptionHistory();
 });
 
 document.getElementById("redeemBtn").addEventListener("click", async () => {
   const code = document.getElementById("codeInput").value.trim();
-  const status = document.getElementById("redeemStatus");
-  try {
-    await addDoc(collection(db, `businessAccounts/${businessUID}/redemptions`), {
-      code,
-      business: currentBusiness,
-      date: new Date().toISOString(),
-      edited: false,
-      deleted: false,
-      notes: ""
-    });
-    status.innerText = "✅ Code redeemed successfully!";
-    refreshAnalytics();
-  } catch (err) {
-    console.error(err);
-    status.innerText = "❌ Error redeeming code.";
-  }
+  if (!code) return;
+
+  await addDoc(collection(db, `businessAccounts/${businessUID}/redemptions`), {
+    code,
+    business: currentBusiness,
+    date: new Date().toISOString(),
+    edited: false,
+    deleted: false,
+    notes: ""
+  });
+
+  document.getElementById("redeemStatus").innerText = "✅ Code redeemed successfully!";
+  refreshRedemptionHistory();
 });
 
-document.getElementById("doneBtn").addEventListener("click", () => {
-  document.getElementById("codeInput").value = "";
-  document.getElementById("redeemStatus").innerText = "";
-  document.getElementById("redeemBtn").style.display = "none";
-  document.getElementById("doneBtn").style.display = "none";
-});
+document.getElementById("doneBtn").addEventListener("click", resetDashboard);
 
 document.getElementById("exportBtn").addEventListener("click", async () => {
-  const snapshot = await getDocs(query(collection(db, `businessAccounts/${businessUID}/redemptions`)));
-  const redemptions = [];
-  snapshot.forEach(doc => {
-    const data = doc.data();
-    if (!data.deleted) redemptions.push(data);
+  const snap = await getDocs(collection(db, `businessAccounts/${businessUID}/redemptions`));
+  const data = [];
+  snap.forEach(doc => {
+    const r = doc.data();
+    if (!r.deleted) data.push(r);
   });
-  redemptions.sort((a, b) => new Date(a.date) - new Date(b.date));
-  const csv = generateCSV(redemptions);
+
+  const csv = generateCSV(data);
   const fileUrl = await uploadCSVFile(csv, `${currentBusiness}_redemptions.csv`);
 
   const templateParams = {
     businessName: currentBusiness,
-    verifiedCount: new Set(redemptions.map(r => r.code)).size,
-    redemptionCount: redemptions.length,
-    firstRedemption: redemptions.length ? formatDate(redemptions[0].date) : "N/A",
-    latestRedemption: redemptions.length ? formatDate(redemptions[redemptions.length - 1].date) : "N/A",
+    verifiedCount: new Set(data.map(r => r.code)).size,
+    redemptionCount: data.length,
+    firstRedemption: data.length ? formatDate(data[0].date) : "N/A",
+    latestRedemption: data.length ? formatDate(data[data.length - 1].date) : "N/A",
     fileUrl,
     to_email: window.businessEmail
   };
 
-  if (window.emailjs) {
-    window.emailjs.send("service_zn4nuce", "template_2zb6jgh", templateParams)
-      .then(() => alert("✅ Export sent to your email!"))
-      .catch(err => {
-        console.error("EmailJS Error:", err);
-        alert("❌ Failed to send email.");
-      });
-  } else {
-    console.error("EmailJS not initialized");
-    alert("❌ EmailJS not loaded.");
-  }
+  window.emailjs.send("service_zn4nuce", "template_2zb6jgh", templateParams)
+    .then(() => alert("✅ Export sent to your email!"))
+    .catch(err => {
+      console.error("Email send failed:", err);
+      alert("❌ Failed to send email.");
+    });
 });
