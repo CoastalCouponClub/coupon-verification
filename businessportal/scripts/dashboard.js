@@ -381,3 +381,13 @@ document.getElementById("doneBtn").addEventListener("click", () => {
   document.getElementById("redeemBtn").disabled = true;
   document.getElementById("doneBtn").style.display = "none";
 });
+
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+  try {
+    await auth.signOut();
+    window.location.href = "login.html";
+  } catch (error) {
+    console.error("Logout failed:", error);
+    alert("An error occurred while logging out. Please try again.");
+  }
+});
