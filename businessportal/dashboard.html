@@ -3,7 +3,7 @@
 <head>
   <title>Business Dashboard</title>
   <style>
-    #redeemSection, #redemptionHistorySection, #analytics {
+    #redeemSection, #redemptionHistorySection {
       display: none;
     }
 
@@ -40,12 +40,20 @@
     #exportBtn:hover {
       background-color: #2980b9;
     }
+
+    #analytics {
+      margin-top: 30px;
+    }
+
+    #analytics p {
+      margin: 4px 0;
+    }
   </style>
 
   <!-- EmailJS SDK v3 (global object) -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script>
-    emailjs.init("zOnUOx-UpvwgXCG8a"); // your public key
+    emailjs.init("zOnUOx-UpvwgXCG8a"); // Your public key
     window.emailjs = emailjs;
   </script>
 </head>
