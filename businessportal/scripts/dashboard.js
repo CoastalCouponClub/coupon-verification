@@ -107,7 +107,6 @@ onSnapshot(redemptionsRef, (snapshot) => {
     history.appendChild(li);
   });
 
-}
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
