@@ -11,8 +11,12 @@ import {
   collection,
   addDoc,
   getDocs,
-  query
+  query,
+  where,
+  serverTimestamp,
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
 import {
   getStorage,
   ref as storageRef,
@@ -20,7 +24,6 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBJxxcGhuYspiZ9HRAlZgihgXLaA2FjPXc",
   authDomain: "coastalcouponverifier.firebaseapp.com",
@@ -38,22 +41,11 @@ let currentBusiness = null;
 let businessUID = null;
 let redemptionLimit = null;
 let resetInterval = null;
+let lastVerifiedCode = null;
 
 function formatDate(isoString) {
   const date = new Date(isoString);
   return date.toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
-}
-
-function generateCSV(data) {
-  const headers = ["Code", "Date", "Business", "Notes", "Edited"];
-  const rows = data.map(r => [
-    r.code,
-    new Date(r.date).toLocaleString(),
-    r.business,
-    r.notes || "",
-    r.edited ? "Yes" : "No"
-  ]);
-  return [headers, ...rows].map(e => e.join(",")).join("\n");
 }
 
 function addMonths(date, months) {
@@ -71,44 +63,149 @@ function addDays(date, days) {
 }
 
 function calculateResetDate(startDate, interval) {
-  if (!interval || interval === "none") return null;
   const date = new Date(startDate);
-  date.setHours(0, 0, 0, 0);
-
   if (["monthly", "1 month"].includes(interval)) return addMonths(date, 1);
   if (["weekly", "1 week"].includes(interval)) return addDays(date, 7);
   if (["daily", "1 day"].includes(interval)) return addDays(date, 1);
   return null;
 }
 
-async function uploadCSVFile(fileContent, filename) {
-  const storage = getStorage(app);
-  const fileRef = storageRef(storage, `exports/${filename}`);
-  const blob = new Blob([fileContent], { type: 'text/csv' });
+function showRedemptionHistory(redemptions) {
+  const historyList = document.getElementById("redemptionHistory");
+  historyList.innerHTML = "";
+  redemptions.forEach((r, index) => {
+    const li = document.createElement("li");
+    li.textContent = `${r.code} — ${formatDate(r.date)} ${r.edited ? '(edited)' : ''}`;
 
-  await uploadBytes(fileRef, blob);
-  return await getDownloadURL(fileRef);
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "Delete";
+    deleteBtn.className = "delete-button";
+    deleteBtn.onclick = async () => {
+      await deleteDoc(doc(db, `businessAccounts/${businessUID}/redemptions`, r.id));
+      verifyCode(lastVerifiedCode); // Refresh
+    };
+
+    li.appendChild(deleteBtn);
+    historyList.appendChild(li);
+  });
+
+  document.getElementById("redemptionHistorySection").style.display = "block";
 }
 
+async function verifyCode(code) {
+  if (!code) return;
+
+  const status = document.getElementById("redeemStatus");
+  const redeemBtn = document.getElementById("redeemBtn");
+  const verifyBtn = document.getElementById("verifyBtn");
+  const doneBtn = document.getElementById("doneBtn");
+
+  status.innerText = "Checking...";
+  lastVerifiedCode = code;
+
+  const codeDoc = await getDoc(doc(db, "verifiedCodes", code));
+  if (!codeDoc.exists()) {
+    status.innerText = "❌ Invalid code.";
+    redeemBtn.style.display = "none";
+    return;
+  }
+
+  const redemptionsRef = collection(db, `businessAccounts/${businessUID}/redemptions`);
+  const snapshot = await getDocs(query(redemptionsRef, where("code", "==", code)));
+
+  const redemptions = [];
+  const validRedemptions = [];
+
+  snapshot.forEach(docSnap => {
+    const data = docSnap.data();
+    const r = { ...data, id: docSnap.id };
+    redemptions.push(r);
+    if (!r.deleted) validRedemptions.push(r);
+  });
+
+  const inWindowRedemptions = validRedemptions.filter(r => {
+    const date = new Date(r.date);
+    const now = new Date();
+    const reset = calculateResetDate(date, resetInterval);
+    return !reset || now < reset;
+  });
+
+  const limitReached = redemptionLimit !== "unlimited" &&
+    inWindowRedemptions.length >= parseInt(redemptionLimit);
+
+  if (limitReached) {
+    const latest = validRedemptions[validRedemptions.length - 1];
+    const resetDate = latest ? calculateResetDate(new Date(latest.date), resetInterval) : null;
+    let message = `✅ Code is valid. Redemption limit reached (${redemptionLimit}).`;
+    if (resetDate) {
+      message += ` Try again after: ${resetDate.toLocaleDateString('en-US', { dateStyle: 'long' })}`;
+    }
+    status.innerText = message;
+    redeemBtn.disabled = true;
+  } else {
+    status.innerText = "✅ Code is valid.";
+    redeemBtn.disabled = false;
+  }
+
+  redeemBtn.style.display = "inline-block";
+  verifyBtn.style.display = "none";
+  doneBtn.style.display = "inline-block";
+
+  showRedemptionHistory(redemptions);
+}
+
+document.getElementById("verifyBtn").addEventListener("click", () => {
+  const code = document.getElementById("codeInput").value.trim();
+  verifyCode(code);
+});
+
+document.getElementById("redeemBtn").addEventListener("click", async () => {
+  const code = lastVerifiedCode;
+  const status = document.getElementById("redeemStatus");
+
+  await addDoc(collection(db, `businessAccounts/${businessUID}/redemptions`), {
+    code,
+    date: new Date().toISOString(),
+    business: currentBusiness,
+    edited: false,
+    deleted: false,
+    notes: ""
+  });
+
+  status.innerText = "✅ Code redeemed successfully.";
+  verifyCode(code); // Refresh UI and check if limit is now triggered
+});
+
+document.getElementById("doneBtn").addEventListener("click", () => {
+  document.getElementById("codeInput").value = "";
+  document.getElementById("redeemStatus").innerText = "";
+  document.getElementById("redeemBtn").style.display = "none";
+  document.getElementById("verifyBtn").style.display = "inline-block";
+  document.getElementById("doneBtn").style.display = "none";
+  document.getElementById("redemptionHistorySection").style.display = "none";
+});
+
+// Auth and load business
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    const uid = user.uid;
     window.businessEmail = user.email;
+    const uid = user.uid;
     const docRef = doc(db, "businessAccounts", uid);
     const businessSnap = await getDoc(docRef);
 
     if (businessSnap.exists()) {
       const data = businessSnap.data();
-      document.getElementById("business-info").innerHTML = `
-        <p><strong>Business Name:</strong> ${data.businessName}</p>
-        <p><strong>Coupon Offer:</strong> ${data.couponOffer}</p>
-        <p><strong>Redemption Limit:</strong> ${data.redemptionLimit}</p>
-        <p><strong>Reset Interval:</strong> ${data.resetInterval}</p>
-      `;
       currentBusiness = data.businessName;
       businessUID = uid;
       redemptionLimit = data.redemptionLimit;
       resetInterval = data.resetInterval;
+
+      document.getElementById("business-info").innerHTML = `
+        <p><strong>Business Name:</strong> ${currentBusiness}</p>
+        <p><strong>Coupon Offer:</strong> ${data.couponOffer}</p>
+        <p><strong>Redemption Limit:</strong> ${redemptionLimit}</p>
+        <p><strong>Reset Interval:</strong> ${resetInterval}</p>
+      `;
     } else {
       document.getElementById("business-info").innerText = "Business account not found.";
     }
@@ -117,6 +214,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
+// Email export logic (kept for reference)
 document.getElementById("exportBtn").addEventListener("click", async () => {
   const redemptionsSnapshot = await getDocs(
     query(collection(db, `businessAccounts/${businessUID}/redemptions`))
@@ -129,8 +227,10 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
   });
 
   redemptions.sort((a, b) => new Date(a.date) - new Date(b.date));
+  const csv = ["Code,Date,Business,Notes,Edited", ...redemptions.map(r =>
+    [r.code, formatDate(r.date), r.business, r.notes || "", r.edited ? "Yes" : "No"].join(",")
+  )].join("\n");
 
-  const csv = generateCSV(redemptions);
   const fileUrl = await uploadCSVFile(csv, `${currentBusiness}_redemptions.csv`);
 
   const templateParams = {
@@ -149,51 +249,4 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
       console.error("Email failed:", err);
       alert("❌ Failed to send email.");
     });
-});
-
-document.getElementById("redeemBtn").addEventListener("click", async () => {
-  const code = document.getElementById("codeInput").value.trim();
-  const status = document.getElementById("redeemStatus");
-
-  if (!code || !currentBusiness) return;
-
-  try {
-    const codeDoc = doc(db, "verifiedCodes", code);
-    const codeSnap = await getDoc(codeDoc);
-
-    if (!codeSnap.exists()) {
-      status.innerText = "Code not found.";
-      return;
-    }
-
-    const codeData = codeSnap.data();
-
-    const redemptionData = {
-      code,
-      date: new Date().toISOString(),
-      business: currentBusiness,
-      notes: "",
-      edited: false,
-      deleted: false
-    };
-
-    await addDoc(collection(db, `businessAccounts/${businessUID}/redemptions`), redemptionData);
-
-    await updateDoc(codeDoc, {
-      redemptions: [...(codeData.redemptions || []), redemptionData]
-    });
-
-    status.innerText = "✅ Code redeemed successfully!";
-    await loadRedemptionHistory(); // Make sure this is async if needed
-
-    // ✅ Rerun verifyCode so redemption limit message and interval message show
-    await verifyCode(code);
-
-    document.getElementById("redeemBtn").style.display = "none";
-    document.getElementById("doneBtn").style.display = "inline-block";
-
-  } catch (error) {
-    console.error("Redeem error:", error);
-    status.innerText = "❌ Failed to redeem code.";
-  }
 });
