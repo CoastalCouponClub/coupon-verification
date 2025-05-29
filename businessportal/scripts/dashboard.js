@@ -252,6 +252,7 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
       });
 
       item.remove();
+      updateAnalytics();
 
       // Check if still over limit
       const remaining = updatedRedemptions.filter(x => x.business === currentBusiness && !x.deleted);
@@ -331,6 +332,7 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
     });
 
     item.remove();
+    updateAnalytics();
     document.getElementById("redeemBtn").disabled = false;
     status.innerText = "✅ Code is valid and can be redeemed.";
   };
