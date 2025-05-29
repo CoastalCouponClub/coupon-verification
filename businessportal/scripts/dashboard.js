@@ -339,6 +339,7 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
 
   item.appendChild(delBtn);
   history.appendChild(item);
+  updateAnalytics();
 
   // Check if limit now reached
   const valid = existing.filter(x => x.business === currentBusiness && !x.deleted);
