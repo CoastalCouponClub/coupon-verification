@@ -167,13 +167,8 @@
     </div>
   </div>
 <!-- Inject Firebase config from Netlify -->
-<script>
-  const config = decodeURIComponent('%FIREBASE_CLIENT_CONFIG%');
-  const script = document.createElement('script');
-  script.id = 'firebase-config';
-  script.setAttribute('data-config', config);
-  document.head.appendChild(script);
-</script>
+<script id="firebase-config" data-config="%7B%22apiKey%22%3A%22AIzaSyBJxxcGhuYspiZ9HRAlZgihgXLaA2FjPXc%22%2C%22authDomain%22%3A%22coastalcouponverifier.firebaseapp.com%22%2C%22projectId%22%3A%22coastalcouponverifier%22%2C%22storageBucket%22%3A%22coastalcouponverifier.firebasestorage.app%22%2C%22messagingSenderId%22%3A%22189807704712%22%2C%22appId%22%3A%221%3A189807704712%3Aweb%3A9427e68464115f388ebd3d%22%7D"></script>
+
 
   <script type="module" src="./scripts/auth.js"></script>
 </body>
