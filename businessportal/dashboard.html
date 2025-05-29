@@ -49,17 +49,15 @@
       margin: 4px 0;
     }
   </style>
+
+  <!-- ✅ Modern EmailJS v3 SDK Setup -->
   <script type="module">
-  import emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
-
-  // Initialize EmailJS
-  emailjs.init("zOnUOx-UpvwgXCG8a"); // Your public key
-
-  // Make it globally available
-  window.emailjs = emailjs;
-</script>
-
+    import emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
+    emailjs.init("zOnUOx-UpvwgXCG8a"); // Your public key
+    window.emailjs = emailjs; // Make it accessible to your dashboard.js
+  </script>
 </head>
+
 <body>
   <h1>Welcome to Your Business Portal</h1>
 
@@ -78,7 +76,6 @@
     <ul id="redemptionHistory"></ul>
   </div>
 
-  <!-- Analytics section -->
   <div id="analytics">
     <h2>Analytics</h2>
     <p><strong>Verified Customers:</strong> <span id="verifiedCount">0</span></p>
@@ -89,13 +86,7 @@
 
   <button id="exportBtn">Export Data</button>
 
-  <!-- EmailJS -->
-  
-  <script>
-    emailjs.init("zOnUOx-UpvwgXCG8a"); // Your EmailJS public key
-  </script>
-
-  <!-- Load your complete app logic via dashboard.js -->
+  <!-- ✅ Your main dashboard logic (make sure this file uses `type="module"` too) -->
   <script type="module" src="scripts/dashboard.js"></script>
 </body>
 </html>
