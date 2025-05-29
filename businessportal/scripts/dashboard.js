@@ -80,6 +80,14 @@ async function updateAnalytics() {
   document.getElementById("totalRedemptions").innerText = redemptions.length;
 }
 
+function updateAnalyticsSection(redemptions) {
+  const uniqueCodes = new Set(redemptions.map(r => r.code));
+  const sorted = redemptions.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  document.getElementById("activeCustomers").innerText = uniqueCodes.size;
+  document.getElementById("totalRedemptions").innerText = redemptions.length;
+}
+
 async function refreshRedemptionHistory() {
   const redemptionsRef = collection(db, `businessAccounts/${businessUID}/redemptions`);
 onSnapshot(redemptionsRef, (snapshot) => {
