@@ -43,7 +43,6 @@ let businessUID = null;
 let redemptionLimit = null;
 let resetInterval = null;
 
-// Helpers
 function formatDate(date) {
   try {
     const d = new Date(date);
@@ -128,9 +127,9 @@ function resetDashboard() {
   document.getElementById("verifyBtn").style.display = "inline-block";
   document.getElementById("redeemStatus").innerText = "";
   document.getElementById("redemptionHistory").innerHTML = "";
+  document.getElementById("redemptionHistorySection").style.display = "none";
 }
 
-// Auth and UI
 onAuthStateChanged(auth, async user => {
   if (!user) return window.location.href = "login.html";
 
@@ -156,9 +155,13 @@ onAuthStateChanged(auth, async user => {
   refreshRedemptionHistory();
 });
 
-// Button Handlers
 document.getElementById("verifyBtn").addEventListener("click", async () => {
   const code = document.getElementById("codeInput").value.trim();
+  const status = document.getElementById("redeemStatus");
+  const redeemBtn = document.getElementById("redeemBtn");
+  const doneBtn = document.getElementById("doneBtn");
+  const verifyBtn = document.getElementById("verifyBtn");
+
   if (!code) return alert("Please enter a code.");
 
   const q = query(collection(db, `businessAccounts/${businessUID}/redemptions`), where("code", "==", code));
@@ -178,19 +181,24 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
 
   const limitReached = redemptionLimit && validRedemptions.length >= redemptionLimit;
 
-  const status = document.getElementById("redeemStatus");
+  document.getElementById("redemptionHistorySection").style.display = "block";
+
   if (limitReached) {
-    const next = addInterval(new Date(redemptions[redemptions.length - 1].date), resetInterval);
-    status.innerText = `❌ Redemption limit reached. Try again after ${formatDate(next)}`;
-    document.getElementById("redeemBtn").disabled = true;
+    const last = redemptions[redemptions.length - 1];
+    const resetDate = addInterval(new Date(last.date), resetInterval);
+    status.innerText = `❌ Redemption limit reached (${redemptionLimit}). Try again after: ${formatDate(resetDate)}`;
+    redeemBtn.disabled = true;
+    redeemBtn.style.opacity = 0.5;
   } else {
-    status.innerText = `✅ Code verified and ready to redeem.`;
-    document.getElementById("redeemBtn").disabled = false;
+    status.innerText = "✅ Code verified and ready to redeem.";
+    redeemBtn.disabled = false;
+    redeemBtn.style.opacity = 1;
   }
 
-  document.getElementById("redeemBtn").style.display = "inline-block";
-  document.getElementById("doneBtn").style.display = "inline-block";
-  document.getElementById("verifyBtn").style.display = "none";
+  redeemBtn.style.display = "inline-block";
+  doneBtn.style.display = "inline-block";
+  verifyBtn.style.display = "none";
+
   refreshRedemptionHistory();
 });
 
