@@ -49,8 +49,14 @@
       margin: 4px 0;
     }
   </style>
-</head>
 
+  <!-- Load EmailJS SDK v3 as a module and make it global -->
+  <script type="module">
+    import emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
+    emailjs.init("zOnUOx-UpvwgXCG8a"); // Your EmailJS public key
+    window.emailjs = emailjs;
+  </script>
+</head>
 <body>
   <h1>Welcome to Your Business Portal</h1>
 
@@ -79,13 +85,7 @@
 
   <button id="exportBtn">Export Data</button>
 
-  <!-- ✅ Load EmailJS SDK globally (non-module version) -->
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-  <script>
-    emailjs.init("zOnUOx-UpvwgXCG8a"); // Replace with your EmailJS public key
-  </script>
-
-  <!-- ✅ Your app logic -->
+  <!-- Load business logic -->
   <script type="module" src="scripts/dashboard.js"></script>
 </body>
 </html>
