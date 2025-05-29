@@ -49,6 +49,16 @@
       margin: 4px 0;
     }
   </style>
+  <script type="module">
+  import emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
+
+  // Initialize EmailJS
+  emailjs.init("zOnUOx-UpvwgXCG8a"); // Your public key
+
+  // Make it globally available
+  window.emailjs = emailjs;
+</script>
+
 </head>
 <body>
   <h1>Welcome to Your Business Portal</h1>
@@ -80,7 +90,7 @@
   <button id="exportBtn">Export Data</button>
 
   <!-- EmailJS -->
-  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+  
   <script>
     emailjs.init("zOnUOx-UpvwgXCG8a"); // Your EmailJS public key
   </script>
