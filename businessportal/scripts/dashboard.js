@@ -1,3 +1,4 @@
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
@@ -65,6 +66,47 @@ function calculateResetDate(startDate, interval) {
   return null;
 }
 
+async function updateAnalytics() {
+  const snap = await getDocs(collection(db, `businessAccounts/${businessUID}/redemptions`));
+  const redemptions = [];
+  snap.forEach(doc => {
+    const data = doc.data();
+    if (!data.deleted) redemptions.push(data);
+  });
+
+  const uniqueCodes = new Set(redemptions.map(r => r.code));
+  document.getElementById("activeCustomers").innerText = uniqueCodes.size;
+  document.getElementById("totalRedemptions").innerText = redemptions.length;
+}
+
+async function refreshRedemptionHistory() {
+  const snapshot = await getDocs(collection(db, `businessAccounts/${businessUID}/redemptions`));
+  const history = document.getElementById("redemptionHistory");
+  history.innerHTML = "";
+
+  const redemptions = [];
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    if (!data.deleted) redemptions.push({ id: doc.id, ...data });
+  });
+
+  redemptions.forEach(entry => {
+    const li = document.createElement("li");
+    li.textContent = `${entry.code} — ${formatDate(entry.date)}`;
+    const btn = document.createElement("button");
+    btn.className = "delete-button";
+    btn.textContent = "Delete";
+    btn.onclick = async () => {
+      await updateDoc(doc(db, `businessAccounts/${businessUID}/redemptions/${entry.id}`), { deleted: true });
+      refreshRedemptionHistory();
+    };
+    li.appendChild(btn);
+    history.appendChild(li);
+  });
+
+  document.getElementById("redemptionHistorySection").style.display = "block";
+  updateAnalytics();
+}
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
@@ -84,251 +126,12 @@ onAuthStateChanged(auth, async (user) => {
       businessUID = uid;
       redemptionLimit = data.redemptionLimit;
       resetInterval = data.resetInterval;
+
+      refreshRedemptionHistory();
     } else {
       document.getElementById("business-info").innerText = "Business account not found.";
     }
   } else {
     window.location.href = "login.html";
   }
-});
-
-document.getElementById("verifyBtn").addEventListener("click", async () => {
-  const code = document.getElementById("codeInput").value.trim();
-  const status = document.getElementById("redeemStatus");
-  const history = document.getElementById("redemptionHistory");
-  const redeemBtn = document.getElementById("redeemBtn");
-  const doneBtn = document.getElementById("doneBtn");
-
-  status.innerText = "";
-  history.innerHTML = "";
-  redeemBtn.style.display = "none";
-  redeemBtn.disabled = false;
-  doneBtn.style.display = "none";
-
-  if (!code) {
-    status.innerText = "Please enter a code to verify.";
-    return;
-  }
-
-  const codeRef = doc(db, "verifiedCodes", code);
-  const codeSnap = await getDoc(codeRef);
-
-  if (!codeSnap.exists() || !codeSnap.data().isValid) {
-    status.innerText = "Code not found or inactive.";
-    return;
-  }
-
-  const data = codeSnap.data();
-  const redemptions = data.redemptions || [];
-  const validRedemptions = redemptions
-  .filter(r => r.business === currentBusiness && !r.deleted)
-  .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-
-  // Calculate valid redemption window
-  let windowStart = null;
-  let resetDate = null;
-
-  if (resetInterval !== "none" && validRedemptions.length > 0) {
-    const firstDate = new Date(validRedemptions[0].date);
-    resetDate = calculateResetDate(firstDate, resetInterval);
-    windowStart = new Date(firstDate);
-    windowStart.setHours(0, 0, 0, 0);
-  }
-
-  const inWindowRedemptions = resetInterval === "none"
-    ? validRedemptions
-    : validRedemptions.filter(r => {
-        const d = new Date(r.date);
-        return d >= windowStart && (!resetDate || d < resetDate);
-      });
-
-  const limitReached = redemptionLimit !== "unlimited" &&
-    inWindowRedemptions.length >= parseInt(redemptionLimit);
-
-  if (limitReached) {
-  let message = `Code is valid. Redemption limit reached (${redemptionLimit}).`;
-
-  console.log("RESET DEBUG — interval:", resetInterval, "validRedemptions:", validRedemptions);
-
-  if (resetInterval !== "none" && validRedemptions.length > 0) {
-    const firstRedemption = new Date(validRedemptions[0].date);
-    const nextReset = calculateResetDate(firstRedemption, resetInterval);
-    console.log("CALCULATED RESET DATE:", nextReset);
-
-    if (nextReset && !isNaN(nextReset.getTime())) {
-      nextReset.setHours(0, 0, 0, 0);
-      const formatted = nextReset.toLocaleDateString('en-US', { dateStyle: 'long' });
-      message += ` Try again after: ${formatted}`;
-    } else {
-      console.warn("Reset date was not valid.");
-    }
-  } else {
-    console.warn("No valid redemptions or reset interval is 'none'");
-  }
-
-  status.textContent = message;
-  redeemBtn.disabled = true;
-  redeemBtn.style.display = "inline-block";
-
-  console.log("FINAL STATUS MESSAGE:", message);
-}
-
-
-
-
-  else {
-    status.innerText = "✅ Code is valid and can be redeemed.";
-    redeemBtn.style.display = "inline-block";
-    redeemBtn.disabled = false;
-  }
-
-  document.getElementById("verifyBtn").style.display = "none";
-  document.getElementById("redemptionHistorySection").style.display = "block";
-  doneBtn.style.display = "inline-block";
-
-  validRedemptions.forEach(r => {
-    const item = document.createElement("li");
-    item.innerText = `• ${formatDate(r.date)} Status: Redeemed`;
-
-    const delBtn = document.createElement("button");
-    delBtn.className = "delete-button";
-    delBtn.innerText = "Delete";
-    delBtn.onclick = async () => {
-      r.deleted = true;
-      const updatedRedemptions = redemptions.map(entry => entry === r ? r : entry);
-      await updateDoc(codeRef, { redemptions: updatedRedemptions });
-
-      const q = query(collection(db, `businessAccounts/${businessUID}/redemptions`), where("code", "==", code));
-      const docs = await getDocs(q);
-      docs.forEach(async d => {
-        await updateDoc(d.ref, { deleted: true });
-      });
-
-      item.remove();
-
-      // Check if still over limit
-      const remaining = updatedRedemptions.filter(x => x.business === currentBusiness && !x.deleted);
-      const redemptionsInWindow = resetInterval === "none"
-        ? remaining
-        : remaining.filter(r => {
-            const d = new Date(r.date);
-            return d >= windowStart && (!resetDate || d < resetDate);
-          });
-
-      if (redemptionsInWindow.length < redemptionLimit) {
-        redeemBtn.disabled = false;
-        status.innerText = "✅ Code is valid and can be redeemed.";
-      }
-    };
-
-    item.appendChild(delBtn);
-    history.appendChild(item);
-  });
-});
-
-document.getElementById("redeemBtn").addEventListener("click", async () => {
-  const code = document.getElementById("codeInput").value.trim();
-  const status = document.getElementById("redeemStatus");
-  const history = document.getElementById("redemptionHistory");
-
-  if (!code || !currentBusiness) {
-    status.innerText = "Missing code or business info.";
-    return;
-  }
-
-  const codeRef = doc(db, "verifiedCodes", code);
-  const codeSnap = await getDoc(codeRef);
-
-  if (!codeSnap.exists()) {
-    status.innerText = "Code does not exist.";
-    return;
-  }
-
-  const redemption = {
-    business: currentBusiness,
-    date: new Date().toISOString(),
-    edited: false,
-    notes: "",
-    businessName: currentBusiness,
-    deleted: false
-  };
-
-  const existing = codeSnap.data().redemptions || [];
-  existing.push(redemption);
-  await updateDoc(codeRef, { redemptions: existing });
-
-  await addDoc(collection(db, `businessAccounts/${businessUID}/redemptions`), {
-    code,
-    ...redemption,
-    timestamp: serverTimestamp()
-  });
-
-  status.innerText = "✅ Redemption logged successfully!";
-  document.getElementById("redeemBtn").disabled = true;
-
-  const item = document.createElement("li");
-  item.innerText = `• ${formatDate(redemption.date)} Status: Redeemed`;
-
-  const delBtn = document.createElement("button");
-  delBtn.className = "delete-button";
-  delBtn.innerText = "Delete";
-  delBtn.onclick = async () => {
-    redemption.deleted = true;
-    const updated = existing.map(entry => entry === redemption ? redemption : entry);
-    await updateDoc(codeRef, { redemptions: updated });
-
-    const q = query(collection(db, `businessAccounts/${businessUID}/redemptions`), where("code", "==", code));
-    const docs = await getDocs(q);
-    docs.forEach(async d => {
-      await updateDoc(d.ref, { deleted: true });
-    });
-
-    item.remove();
-    document.getElementById("redeemBtn").disabled = false;
-    status.innerText = "✅ Code is valid and can be redeemed.";
-  };
-
-  item.appendChild(delBtn);
-  history.appendChild(item);
-
-  // Check if limit now reached
-  const valid = existing.filter(x => x.business === currentBusiness && !x.deleted);
-  const windowStart = new Date(valid[0]?.date || new Date());
-  windowStart.setHours(0, 0, 0, 0);
-  const nextReset = calculateResetDate(valid[0]?.date, resetInterval);
-  const inWindow = resetInterval === "none"
-    ? valid
-    : valid.filter(r => {
-        const d = new Date(r.date);
-        return d >= windowStart && (!nextReset || d < nextReset);
-      });
-
-  if (inWindow.length >= redemptionLimit) {
-  let message = `\nRedemption limit reached (${redemptionLimit}).`;
-
-  if (resetInterval !== "none" && nextReset) {
-    const resetMidnight = new Date(nextReset);
-    resetMidnight.setHours(0, 0, 0, 0);
-    const resetDateString = resetMidnight.toLocaleDateString('en-US', { dateStyle: 'long' });
-    message += ` Try again after: ${resetDateString}`;
-  }
-
-  status.innerText += message;
-}
-
-
-});
-
-document.getElementById("doneBtn").addEventListener("click", () => {
-  document.getElementById("codeInput").value = "";
-  document.getElementById("redeemStatus").innerText = "";
-  document.getElementById("redeemStatus").style.color = "";
-  document.getElementById("redemptionHistory").innerHTML = "";
-  document.getElementById("redemptionHistorySection").style.display = "none";
-
-  document.getElementById("verifyBtn").style.display = "inline-block";
-  document.getElementById("redeemBtn").style.display = "none";
-  document.getElementById("redeemBtn").disabled = true;
-  document.getElementById("doneBtn").style.display = "none";
 });
