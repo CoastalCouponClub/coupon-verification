@@ -50,11 +50,11 @@
     }
   </style>
 
-  <!-- EmailJS V3 (Global version, works with window.emailjs) -->
+  <!-- EmailJS SDK v3 (browser global) -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script>
-    emailjs.init("zOnUOx-UpvwgXCG8a"); // Replace with your EmailJS Public Key
-    window.emailjs = emailjs;
+    emailjs.init("zOnUOx-UpvwgXCG8a"); // Your EmailJS public key
+    window.emailjs = emailjs; // Make it globally accessible
   </script>
 </head>
 <body>
@@ -85,7 +85,7 @@
 
   <button id="exportBtn">Export Data</button>
 
-  <!-- Load the dashboard logic -->
+  <!-- Load dashboard logic -->
   <script type="module" src="scripts/dashboard.js"></script>
 </body>
 </html>
