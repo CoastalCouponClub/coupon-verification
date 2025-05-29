@@ -23,7 +23,6 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBJxxcGhuYspiZ9HRAlZgihgXLaA2FjPXc",
   authDomain: "coastalcouponverifier.firebaseapp.com",
@@ -43,7 +42,6 @@ let businessUID = null;
 let redemptionLimit = null;
 let resetInterval = null;
 
-// Helpers
 function formatDate(date) {
   try {
     const d = new Date(date);
@@ -129,14 +127,12 @@ function resetDashboard() {
   document.getElementById("redemptionHistorySection").style.display = "none";
 }
 
-// Auth and UI
 onAuthStateChanged(auth, async user => {
   if (!user) return window.location.href = "login.html";
 
   const uid = user.uid;
   window.businessEmail = user.email;
   const snap = await getDoc(doc(db, "businessAccounts", uid));
-
   if (!snap.exists()) return;
 
   const data = snap.data();
@@ -156,13 +152,12 @@ onAuthStateChanged(auth, async user => {
   refreshRedemptionHistory();
 });
 
-// Verify Button
 document.getElementById("verifyBtn").addEventListener("click", async () => {
   const code = document.getElementById("codeInput").value.trim();
   if (!code) return alert("Please enter a code.");
 
-  const codeSnap = await getDoc(doc(db, "validCodes", code));
-  if (!codeSnap.exists()) {
+  const validSnap = await getDoc(doc(db, "validCodes", code));
+  if (!validSnap.exists()) {
     document.getElementById("redeemStatus").innerText = "❌ Invalid code.";
     return;
   }
@@ -176,22 +171,20 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   });
 
   const now = new Date();
-  const recentRedemptions = redemptions.filter(r => {
+  const withinLimit = redemptions.filter(r => {
     if (!resetInterval) return true;
-    const resetDate = addInterval(new Date(r.date), resetInterval);
-    return now < resetDate;
+    return now < addInterval(new Date(r.date), resetInterval);
   });
 
-  const limitReached = redemptionLimit && recentRedemptions.length >= redemptionLimit;
-
   const status = document.getElementById("redeemStatus");
+  const limitReached = redemptionLimit && withinLimit.length >= redemptionLimit;
+
   if (limitReached) {
-    const lastDate = new Date(redemptions[redemptions.length - 1].date);
-    const next = addInterval(lastDate, resetInterval);
-    status.innerText = `❌ Redemption limit reached. Try again after ${formatDate(next)}`;
+    const next = addInterval(new Date(redemptions[redemptions.length - 1].date), resetInterval);
+    status.innerText = `❌ Redemption limit reached.\nTry again after ${formatDate(next)}`;
     document.getElementById("redeemBtn").disabled = true;
   } else {
-    status.innerText = `✅ Code verified and ready to redeem.`;
+    status.innerText = "✅ Code verified and ready to redeem.";
     document.getElementById("redeemBtn").disabled = false;
   }
 
@@ -201,7 +194,6 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
   document.getElementById("redemptionHistorySection").style.display = "block";
 });
 
-// Redeem Button
 document.getElementById("redeemBtn").addEventListener("click", async () => {
   const code = document.getElementById("codeInput").value.trim();
   if (!code) return;
@@ -219,10 +211,8 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
   refreshRedemptionHistory();
 });
 
-// Done Button
 document.getElementById("doneBtn").addEventListener("click", resetDashboard);
 
-// Export Button
 document.getElementById("exportBtn").addEventListener("click", async () => {
   const snap = await getDocs(collection(db, `businessAccounts/${businessUID}/redemptions`));
   const data = [];
