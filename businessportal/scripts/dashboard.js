@@ -17,7 +17,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Initialize Firebase from injected config
-const app = initializeApp(window.firebaseConfig);
+const app = initializeApp(JSON.parse(decodeURIComponent(
+  document.querySelector('#firebase-config').getAttribute('data-config')
+)));
 const auth = getAuth(app);
 const db = getFirestore(app);
 
