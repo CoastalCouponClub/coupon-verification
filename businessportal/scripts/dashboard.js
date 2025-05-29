@@ -14,8 +14,7 @@ import {
   getDocs,
   query,
   where,
-  serverTimestamp,
-  onSnapshot
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -81,8 +80,7 @@ async function updateAnalytics() {
 }
 
 async function refreshRedemptionHistory() {
-  const redemptionsRef = collection(db, `businessAccounts/${businessUID}/redemptions`);
-onSnapshot(redemptionsRef, (snapshot) => {
+  const snapshot = await getDocs(collection(db, `businessAccounts/${businessUID}/redemptions`));
   const history = document.getElementById("redemptionHistory");
   history.innerHTML = "";
 
@@ -92,8 +90,6 @@ onSnapshot(redemptionsRef, (snapshot) => {
     if (!data.deleted) redemptions.push({ id: doc.id, ...data });
   });
 
-  updateAnalytics();
-
   redemptions.forEach(entry => {
     const li = document.createElement("li");
     li.textContent = `${entry.code} — ${formatDate(entry.date)}`;
@@ -101,13 +97,14 @@ onSnapshot(redemptionsRef, (snapshot) => {
     btn.className = "delete-button";
     btn.textContent = "Delete";
     btn.onclick = async () => {
-  await deleteDoc(doc(db, `businessAccounts/${businessUID}/redemptions/${entry.id}`));
-  await refreshRedemptionHistory(); // 👈 re-fetch and re-render the analytics + list
-};
+      await updateDoc(doc(db, `businessAccounts/${businessUID}/redemptions/${entry.id}`), { deleted: true });
+      refreshRedemptionHistory();
+    };
     li.appendChild(btn);
     history.appendChild(li);
   });
-});
+
+  updateAnalytics();
 }
 
 onAuthStateChanged(auth, async (user) => {
