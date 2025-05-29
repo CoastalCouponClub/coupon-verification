@@ -29,32 +29,7 @@
     #redeemBtn, #doneBtn {
       display: none;
     }
-
-    #exportBtn {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-weight: bold;
-      background-color: #3498db;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    #exportBtn:hover {
-      background-color: #2980b9;
-    }
-
-    #analytics p {
-      margin: 4px 0;
-    }
   </style>
-
-  <!-- EmailJS browser SDK (global) -->
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-  <script>
-    window.emailjs.init("zOnUOx-UpvwgXCG8a"); // Your EmailJS public key
-  </script>
 </head>
 <body>
   <h1>Welcome to Your Business Portal</h1>
@@ -69,24 +44,14 @@
 
   <p id="redeemStatus" style="font-weight: bold;"></p>
 
-  <!-- Redemption History -->
   <div id="redemptionHistorySection">
     <h2>Redemption History</h2>
     <ul id="redemptionHistory"></ul>
   </div>
 
-  <!-- Analytics -->
-  <div id="analytics" style="display: block;">
-    <h2>Analytics</h2>
-    <p><strong>Verified Customers:</strong> <span id="verifiedCount">0</span></p>
-    <p><strong>Total Redemptions:</strong> <span id="redemptionCount">0</span></p>
-    <p><strong>First Redemption:</strong> <span id="firstRedemption">N/A</span></p>
-    <p><strong>Most Recent Redemption:</strong> <span id="latestRedemption">N/A</span></p>
-  </div>
-
-  <button id="exportBtn">Export Data</button>
-
-  <!-- Load Firebase dashboard script -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
   <script type="module" src="scripts/dashboard.js"></script>
 </body>
 </html>
