@@ -16,15 +16,12 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Initialize Firebase from injected config
+// Secure Firebase config injection
 const app = initializeApp(JSON.parse(decodeURIComponent(
   document.querySelector('#firebase-config').getAttribute('data-config')
 )));
 const auth = getAuth(app);
 const db = getFirestore(app);
-
-// ... the rest of your existing verified code logic ...
-
 
 let currentBusiness = null;
 let businessUID = null;
@@ -36,13 +33,6 @@ function formatDate(isoString) {
   return date.toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
 }
 
-function addMonths(date, months) {
-  const result = new Date(date);
-  result.setMonth(result.getMonth() + months);
-  result.setHours(0, 0, 0, 0);
-  return result;
-}
-
 function addDays(date, days) {
   const result = new Date(date);
   result.setDate(result.getDate() + days);
@@ -50,16 +40,24 @@ function addDays(date, days) {
   return result;
 }
 
+function addMonths(date, months) {
+  const result = new Date(date);
+  result.setMonth(result.getMonth() + months);
+  result.setHours(0, 0, 0, 0);
+  return result;
+}
+
 function calculateResetDate(startDate, interval) {
-  if (!interval || interval === "none") return null;
-  const date = new Date(startDate);
-  date.setHours(0, 0, 0, 0);
+  const base = new Date(startDate);
+  base.setHours(0, 0, 0, 0);
 
-  if (["monthly", "1 month"].includes(interval)) return addMonths(date, 1);
-  if (["weekly", "1 week"].includes(interval)) return addDays(date, 7);
-  if (["daily", "1 day"].includes(interval)) return addDays(date, 1);
-
-  return null;
+  switch (interval) {
+    case "daily": return addDays(base, 1);
+    case "weekly": return addDays(base, 7);
+    case "monthly": return addMonths(base, 1);
+    case "yearly": return addMonths(base, 12);
+    default: return null;
+  }
 }
 
 async function updateAnalytics() {
@@ -70,8 +68,17 @@ async function updateAnalytics() {
     if (!data.deleted) redemptions.push(data);
   });
 
-  const uniqueCodes = new Set(redemptions.map(r => r.code));
-  document.getElementById("activeCustomers").innerText = uniqueCodes.size;
+  const activeCustomerMap = {};
+  redemptions.forEach(r => {
+    if (!activeCustomerMap[r.code]) activeCustomerMap[r.code] = [];
+    activeCustomerMap[r.code].push(r);
+  });
+
+  const activeCustomerCount = Object.values(activeCustomerMap).filter(rList =>
+    rList.some(r => !r.deleted)
+  ).length;
+
+  document.getElementById("activeCustomers").innerText = activeCustomerCount;
   document.getElementById("totalRedemptions").innerText = redemptions.length;
 }
 
@@ -184,22 +191,18 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
     inWindowRedemptions.length >= parseInt(redemptionLimit);
 
   if (limitReached) {
-    let message = `Code is valid. Redemption limit reached (${redemptionLimit}).`;
-
-    if (resetInterval !== "none" && validRedemptions.length > 0 && resetDate) {
+    let message = `❌ Redemption limit reached (${redemptionLimit}).`;
+    if (resetInterval !== "none" && resetDate) {
       const formatted = resetDate.toLocaleDateString('en-US', { dateStyle: 'long' });
       message += ` Try again after: ${formatted}`;
     }
-
-    status.textContent = message;
+    status.innerText = message;
     redeemBtn.disabled = true;
-    redeemBtn.style.display = "inline-block";
   } else {
     status.innerText = "✅ Code is valid and can be redeemed.";
-    redeemBtn.style.display = "inline-block";
-    redeemBtn.disabled = false;
   }
 
+  redeemBtn.style.display = "inline-block";
   document.getElementById("verifyBtn").style.display = "none";
   document.getElementById("redemptionHistorySection").style.display = "block";
   doneBtn.style.display = "inline-block";
@@ -323,12 +326,12 @@ document.getElementById("redeemBtn").addEventListener("click", async () => {
       });
 
   if (inWindow.length >= redemptionLimit) {
-    let message = `\nRedemption limit reached (${redemptionLimit}).`;
+    let message = `❌ Redemption limit reached (${redemptionLimit}).`;
     if (resetInterval !== "none" && nextReset) {
       const resetDateString = nextReset.toLocaleDateString('en-US', { dateStyle: 'long' });
       message += ` Try again after: ${resetDateString}`;
     }
-    status.innerText += message;
+    status.innerText += "\n" + message;
   }
 });
 
