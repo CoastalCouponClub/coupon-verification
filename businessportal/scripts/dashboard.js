@@ -22,7 +22,7 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-// Firebase setup
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBJxxcGhuYspiZ9HRAlZgihgXLaA2FjPXc",
   authDomain: "coastalcouponverifier.firebaseapp.com",
@@ -43,15 +43,19 @@ let redemptionLimit = null;
 let resetInterval = null;
 
 function formatDate(isoString) {
-  const date = new Date(isoString);
-  return date.toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
+  try {
+    const date = new Date(isoString);
+    return isNaN(date) ? "Invalid Date" : date.toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
+  } catch {
+    return "Invalid Date";
+  }
 }
 
 function generateCSV(data) {
   const headers = ["Code", "Date", "Business", "Notes", "Edited"];
   const rows = data.map(r => [
     r.code,
-    new Date(r.date).toLocaleString(),
+    formatDate(r.date),
     r.business,
     r.notes || "",
     r.edited ? "Yes" : "No"
@@ -59,37 +63,20 @@ function generateCSV(data) {
   return [headers, ...rows].map(e => e.join(",")).join("\n");
 }
 
-function addMonths(date, months) {
-  const result = new Date(date);
-  result.setMonth(result.getMonth() + months);
-  result.setHours(0, 0, 0, 0);
-  return result;
-}
-
-function addDays(date, days) {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  result.setHours(0, 0, 0, 0);
-  return result;
-}
-
-function calculateResetDate(startDate, interval) {
-  if (!interval || interval === "none") return null;
-  const date = new Date(startDate);
-  date.setHours(0, 0, 0, 0);
-  if (["monthly", "1 month"].includes(interval)) return addMonths(date, 1);
-  if (["weekly", "1 week"].includes(interval)) return addDays(date, 7);
-  if (["daily", "1 day"].includes(interval)) return addDays(date, 1);
-  return null;
-}
-
 async function uploadCSVFile(fileContent, filename) {
   const fileRef = storageRef(storage, `exports/${filename}`);
   const blob = new Blob([fileContent], { type: 'text/csv' });
+
   console.log("Uploading CSV file...", filename, blob);
-  await uploadBytes(fileRef, blob);
-  console.log("Upload successful. Fetching download URL...");
-  return await getDownloadURL(fileRef);
+
+  try {
+    await uploadBytes(fileRef, blob);
+    console.log("Upload successful. Fetching download URL...");
+    return await getDownloadURL(fileRef);
+  } catch (error) {
+    console.error("UPLOAD ERROR:", error);
+    throw error;
+  }
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -111,6 +98,10 @@ onAuthStateChanged(auth, async (user) => {
       businessUID = uid;
       redemptionLimit = data.redemptionLimit;
       resetInterval = data.resetInterval;
+
+      document.getElementById("analytics").style.display = "block"; // ensure analytics show
+    } else {
+      document.getElementById("business-info").innerText = "Business account not found.";
     }
   } else {
     window.location.href = "login.html";
@@ -118,35 +109,45 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 document.getElementById("exportBtn").addEventListener("click", async () => {
-  const redemptionsSnapshot = await getDocs(
-    query(collection(db, `businessAccounts/${businessUID}/redemptions`))
-  );
+  try {
+    const redemptionsSnapshot = await getDocs(
+      query(collection(db, `businessAccounts/${businessUID}/redemptions`))
+    );
 
-  const redemptions = [];
-  redemptionsSnapshot.forEach(doc => {
-    const data = doc.data();
-    if (!data.deleted) redemptions.push(data);
-  });
-
-  redemptions.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  const csv = generateCSV(redemptions);
-  const fileUrl = await uploadCSVFile(csv, `${currentBusiness}_redemptions.csv`);
-
-  const templateParams = {
-    businessName: currentBusiness,
-    verifiedCount: new Set(redemptions.map(r => r.code)).size,
-    redemptionCount: redemptions.length,
-    firstRedemption: redemptions.length ? formatDate(redemptions[0].date) : "N/A",
-    latestRedemption: redemptions.length ? formatDate(redemptions[redemptions.length - 1].date) : "N/A",
-    fileUrl,
-    to_email: window.businessEmail
-  };
-
-  emailjs.send("service_zn4nuce", "template_2zb6jgh", templateParams)
-    .then(() => alert("✅ Export sent to your email!"))
-    .catch(err => {
-      console.error("Email send failed:", err);
-      alert("❌ Failed to send email.");
+    const redemptions = [];
+    redemptionsSnapshot.forEach(doc => {
+      const data = doc.data();
+      if (!data.deleted) redemptions.push(data);
     });
+
+    redemptions.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    const csv = generateCSV(redemptions);
+    const fileUrl = await uploadCSVFile(csv, `${currentBusiness}_redemptions.csv`);
+
+    const templateParams = {
+      businessName: currentBusiness,
+      verifiedCount: new Set(redemptions.map(r => r.code)).size,
+      redemptionCount: redemptions.length,
+      firstRedemption: redemptions.length ? formatDate(redemptions[0].date) : "N/A",
+      latestRedemption: redemptions.length ? formatDate(redemptions[redemptions.length - 1].date) : "N/A",
+      fileUrl,
+      to_email: window.businessEmail
+    };
+
+    if (window.emailjs) {
+      window.emailjs.send("service_zn4nuce", "template_2zb6jgh", templateParams)
+        .then(() => alert("✅ Export sent to your email!"))
+        .catch(err => {
+          console.error("Email send failed:", err);
+          alert("❌ Failed to send email.");
+        });
+    } else {
+      console.error("EmailJS not initialized");
+      alert("❌ EmailJS not loaded.");
+    }
+  } catch (error) {
+    console.error("Export Error:", error);
+    alert("❌ Export failed. Check console for details.");
+  }
 });
