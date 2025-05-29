@@ -96,8 +96,13 @@ async function uploadCSVFile(fileContent, filename) {
   const storage = getStorage(app, "gs://coastalcouponclub-exports");
   const fileRef = storageRef(storage, `exports/${filename}`);
   const blob = new Blob([fileContent], { type: 'text/csv' });
+console.log("Uploading CSV file...", filename, blob);
 
+ try {
   await uploadBytes(fileRef, blob);
+} catch (error) {
+  console.error("UPLOAD ERROR:", error);
+}
   return await getDownloadURL(fileRef);
 }
 
