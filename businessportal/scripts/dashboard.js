@@ -64,22 +64,32 @@ async function updateAnalytics() {
   const snap = await getDocs(collection(db, `businessAccounts/${businessUID}/redemptions`));
   const redemptions = [];
   snap.forEach(doc => {
-    const data = doc.data();
-    if (!data.deleted) redemptions.push(data);
+    redemptions.push(doc.data()); // Don't filter yet
   });
 
-  const activeCustomerMap = {};
-  redemptions.forEach(r => {
-    if (!activeCustomerMap[r.code]) activeCustomerMap[r.code] = [];
-    activeCustomerMap[r.code].push(r);
-  });
+  // Count unique customer codes with at least one non-deleted log
+  const activeCodes = new Set();
+  const allCodesMap = {};
 
-  const activeCustomerCount = Object.values(activeCustomerMap).filter(rList =>
-    rList.some(r => !r.deleted)
-  ).length;
+  for (const r of redemptions) {
+    if (!r.code) continue;
 
-  document.getElementById("activeCustomers").innerText = activeCustomerCount;
-  document.getElementById("totalRedemptions").innerText = redemptions.length;
+    if (!allCodesMap[r.code]) {
+      allCodesMap[r.code] = [];
+    }
+    allCodesMap[r.code].push(r);
+  }
+
+  for (const [code, logs] of Object.entries(allCodesMap)) {
+    if (logs.some(entry => !entry.deleted)) {
+      activeCodes.add(code);
+    }
+  }
+
+  const nonDeleted = redemptions.filter(r => !r.deleted);
+
+  document.getElementById("activeCustomers").innerText = activeCodes.size;
+  document.getElementById("totalRedemptions").innerText = nonDeleted.length;
 }
 
 async function refreshRedemptionHistory() {
