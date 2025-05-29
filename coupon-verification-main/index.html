@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coupon Code Lookup | Coastal Coupon Club</title>
+  <link href="https://fonts.googleapis.com/css2?family=ABeeZee:wght@700&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'SuperFuntime';
+      src: url('https://coastalcouponclub.com/fonts/SuperFuntime.ttf') format('truetype');
+    }
+    body {
+      background: #FEFEF8;
+      font-family: 'ABeeZee', sans-serif;
+      font-weight: bold;
+      text-align: center;
+      padding: 2rem;
+      color: #222d47;
+    }
+    h1 {
+      font-family: 'SuperFuntime', cursive;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    input {
+      padding: 12px;
+      font-size: 1.2rem;
+      width: 280px;
+      margin: 1rem 0;
+      border: 2px solid #222d47;
+      border-radius: 6px;
+      font-family: 'ABeeZee', sans-serif;
+      font-weight: bold;
+      color: #222d47;
+    }
+    button {
+      font-family: 'SuperFuntime', cursive;
+      font-size: 1.3rem;
+      padding: 10px 24px;
+      background-color: #222d47;
+      color: #FEFEF8;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    #result {
+      margin-top: 1.5rem;
+      font-size: 1.2rem;
+      font-family: 'ABeeZee', sans-serif;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Coupon Code Lookup</h1>
+  <p>Enter the customer's 10-digit code to verify membership.</p>
+  <input type="text" id="codeInput" placeholder="e.g. 2847153962">
+  <br>
+  <button onclick="verifyCode()">Verify</button>
+  <div id="result"></div>
+
+  <script>
+    async function verifyCode() {
+      const code = document.getElementById('codeInput').value.trim();
+      const resultBox = document.getElementById('result');
+
+      if (!/^[0-9]{10}$/.test(code)) {
+        resultBox.textContent = '❌ Please enter a valid 10-digit code.';
+        return;
+      }
+
+      resultBox.textContent = 'Checking...';
+
+      try {
+        const response = await fetch(`/.netlify/functions/validatecode?code=${encodeURIComponent(code)}`);
+        const data = await response.json();
+
+        if (data.valid) {
+          resultBox.textContent = `✅ Valid Member Code: ${code}`;
+        } else {
+          resultBox.textContent = `❌ Code not found or inactive.`;
+        }
+      } catch (error) {
+        resultBox.textContent = `⚠️ Error verifying code.`;
+        console.error(error);
+      }
+    }
+  </script>
+</body>
+</html>

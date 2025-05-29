@@ -1,0 +1,17 @@
+{
+  "name": "coupon-verifier-env",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+  "node-fetch": "^3.3.2",
+  "firebase": "^9.0.0",
+  "firebase-admin": "^11.5.0"
+}
+}
