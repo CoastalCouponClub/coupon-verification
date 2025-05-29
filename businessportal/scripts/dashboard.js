@@ -92,7 +92,7 @@ onSnapshot(redemptionsRef, (snapshot) => {
     if (!data.deleted) redemptions.push({ id: doc.id, ...data });
   });
 
-  updateAnalyticsSection(redemptions);
+  updateAnalytics();
 
   redemptions.forEach(entry => {
     const li = document.createElement("li");
