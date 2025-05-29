@@ -159,18 +159,24 @@
       <input type="text" id="signup-offer" placeholder="Coupon Offer (e.g., 50% off)" required />
 
       <label for="signup-redemption-limit">Redemption Limit:</label>
-      <select id="signup-redemption-limit">
-        <option value="1">1x</option>
-        <option value="2">2x</option>
-        <option value="unlimited">Unlimited</option>
-      </select>
+<select id="signup-redemption-limit" required>
+  <option value="1">1</option>
+  <option value="2">2</option>
+  <option value="3">3</option>
+  <option value="4">4</option>
+  <option value="5">5</option>
+  <option value="unlimited">Unlimited</option>
+</select><br>
 
-      <label for="signup-reset-interval">Redemption Reset:</label>
-      <select id="signup-reset-interval">
-        <option value="never">Never</option>
-        <option value="1 month">1 Month</option>
-        <option value="1 year">1 Year</option>
-      </select>
+<label for="signup-reset-interval">Redemption Reset:</label>
+<select id="signup-reset-interval" required>
+  <option value="none">None</option>
+  <option value="daily">Daily</option>
+  <option value="weekly">Weekly</option>
+  <option value="monthly">Monthly</option>
+  <option value="yearly">Yearly</option>
+</select><br><br>
+
 
       <button type="submit">Sign Up</button>
     </form>
