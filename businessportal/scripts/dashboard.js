@@ -14,8 +14,7 @@ import {
   getDocs,
   query,
   where,
-  serverTimestamp,
-  onSnapshot
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -80,14 +79,6 @@ async function updateAnalytics() {
   document.getElementById("totalRedemptions").innerText = redemptions.length;
 }
 
-function updateAnalyticsSection(redemptions) {
-  const uniqueCodes = new Set(redemptions.map(r => r.code));
-  const sorted = redemptions.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  document.getElementById("activeCustomers").innerText = uniqueCodes.size;
-  document.getElementById("totalRedemptions").innerText = redemptions.length;
-}
-
 async function refreshRedemptionHistory() {
   const redemptionsRef = collection(db, `businessAccounts/${businessUID}/redemptions`);
 onSnapshot(redemptionsRef, (snapshot) => {
@@ -109,13 +100,13 @@ onSnapshot(redemptionsRef, (snapshot) => {
     btn.className = "delete-button";
     btn.textContent = "Delete";
     btn.onclick = async () => {
-  await deleteDoc(doc(db, `businessAccounts/${businessUID}/redemptions/${entry.id}`));
-  await refreshRedemptionHistory(); // 👈 re-fetch and re-render the analytics + list
-};
+      await deleteDoc(doc(db, `businessAccounts/${businessUID}/redemptions/${entry.id}`));
+      // Deletion will trigger this listener again automatically.
+    };
     li.appendChild(btn);
     history.appendChild(li);
   });
-});
+
 }
 
 onAuthStateChanged(auth, async (user) => {
