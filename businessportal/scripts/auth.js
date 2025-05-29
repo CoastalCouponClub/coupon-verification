@@ -13,20 +13,16 @@ import {
   addDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBJxxcGhuYspiZ9HRAlZgihgXLaA2FjPXc",
-  authDomain: "coastalcouponverifier.firebaseapp.com",
-  projectId: "coastalcouponverifier",
-  storageBucket: "coastalcouponverifier.firebasestorage.app",
-  messagingSenderId: "189807704712",
-  appId: "1:189807704712:web:9427e68464115f388ebd3d"
-};
+// ✅ Securely load Firebase config from Netlify-injected script tag
+const configScript = document.querySelector('script[data-config]');
+const firebaseConfig = JSON.parse(decodeURIComponent(configScript.getAttribute('data-config')));
 
+// ✅ Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Auto-resize embed iframe
+// Auto-resize support for embedded use
 if (window.ResizeObserver) {
   const resizeObserver = new ResizeObserver(() => {
     window.parent?.postMessage({ type: 'resize', height: document.body.scrollHeight }, '*');
@@ -34,7 +30,7 @@ if (window.ResizeObserver) {
   resizeObserver.observe(document.body);
 }
 
-// Login
+// ✅ LOGIN LOGIC
 const loginForm = document.getElementById("login-form");
 const loginMessage = document.getElementById("loginMessage");
 
@@ -68,7 +64,7 @@ if (loginForm) {
   });
 }
 
-// Signup
+// ✅ SIGNUP LOGIC
 const signupForm = document.getElementById("signup-form");
 const signupMessage = document.getElementById("formMessage");
 
