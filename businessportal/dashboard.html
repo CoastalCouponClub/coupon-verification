@@ -50,11 +50,11 @@
     }
   </style>
 
-  <!-- ✅ Modern EmailJS v3 SDK Setup -->
+  <!-- EmailJS SDK (v3) with global scope -->
   <script type="module">
     import emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
-    emailjs.init("zOnUOx-UpvwgXCG8a"); // Your public key
-    window.emailjs = emailjs; // Make it accessible to your dashboard.js
+    emailjs.init("zOnUOx-UpvwgXCG8a"); // Replace with your EmailJS public key
+    window.emailjs = emailjs; // Expose globally for dashboard.js to access
   </script>
 </head>
 
@@ -86,7 +86,7 @@
 
   <button id="exportBtn">Export Data</button>
 
-  <!-- ✅ Your main dashboard logic (make sure this file uses `type="module"` too) -->
+  <!-- Firebase app logic -->
   <script type="module" src="scripts/dashboard.js"></script>
 </body>
 </html>
