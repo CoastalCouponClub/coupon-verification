@@ -41,14 +41,11 @@ let currentBusiness = null;
 let businessUID = null;
 let redemptionLimit = null;
 let resetInterval = null;
+window.businessEmail = null;
 
-function formatDate(isoString) {
-  try {
-    const date = new Date(isoString);
-    return isNaN(date) ? "Invalid Date" : date.toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
-  } catch {
-    return "Invalid Date";
-  }
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  return isNaN(date) ? "Invalid Date" : date.toLocaleString("en-US", { dateStyle: "short", timeStyle: "short" });
 }
 
 function generateCSV(data) {
@@ -79,6 +76,25 @@ async function uploadCSVFile(fileContent, filename) {
   }
 }
 
+async function loadAnalyticsData() {
+  const redemptionsSnapshot = await getDocs(
+    query(collection(db, `businessAccounts/${businessUID}/redemptions`))
+  );
+
+  const redemptions = [];
+  redemptionsSnapshot.forEach(doc => {
+    const data = doc.data();
+    if (!data.deleted) redemptions.push(data);
+  });
+
+  redemptions.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  document.getElementById("verifiedCount").textContent = new Set(redemptions.map(r => r.code)).size;
+  document.getElementById("redemptionCount").textContent = redemptions.length;
+  document.getElementById("firstRedemption").textContent = redemptions.length ? formatDate(redemptions[0].date) : "N/A";
+  document.getElementById("latestRedemption").textContent = redemptions.length ? formatDate(redemptions[redemptions.length - 1].date) : "N/A";
+}
+
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     const uid = user.uid;
@@ -99,13 +115,20 @@ onAuthStateChanged(auth, async (user) => {
       redemptionLimit = data.redemptionLimit;
       resetInterval = data.resetInterval;
 
-      document.getElementById("analytics").style.display = "block"; // ensure analytics show
+      document.getElementById("analytics").style.display = "block";
+      await loadAnalyticsData();
     } else {
       document.getElementById("business-info").innerText = "Business account not found.";
     }
   } else {
     window.location.href = "login.html";
   }
+});
+
+document.getElementById("verifyBtn").addEventListener("click", () => {
+  const code = document.getElementById("codeInput").value.trim();
+  if (!code) return alert("Please enter a customer code.");
+  alert(`✅ Code "${code}" is valid (simulated).`);
 });
 
 document.getElementById("exportBtn").addEventListener("click", async () => {
@@ -121,7 +144,6 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
     });
 
     redemptions.sort((a, b) => new Date(a.date) - new Date(b.date));
-
     const csv = generateCSV(redemptions);
     const fileUrl = await uploadCSVFile(csv, `${currentBusiness}_redemptions.csv`);
 
@@ -136,12 +158,8 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
     };
 
     if (window.emailjs) {
-      window.emailjs.send("service_zn4nuce", "template_2zb6jgh", templateParams)
-        .then(() => alert("✅ Export sent to your email!"))
-        .catch(err => {
-          console.error("Email send failed:", err);
-          alert("❌ Failed to send email.");
-        });
+      await window.emailjs.send("service_zn4nuce", "template_2zb6jgh", templateParams);
+      alert("✅ Export sent to your email!");
     } else {
       console.error("EmailJS not initialized");
       alert("❌ EmailJS not loaded.");
