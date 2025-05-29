@@ -7,10 +7,6 @@
       display: none;
     }
 
-    #codeInput, #verifyBtn, #redeemBtn {
-      margin-right: 5px;
-    }
-
     .delete-button {
       margin-left: 10px;
       padding: 2px 6px;
@@ -44,17 +40,13 @@
     #exportBtn:hover {
       background-color: #2980b9;
     }
-
-    #analytics p {
-      margin: 4px 0;
-    }
   </style>
 
-  <!-- EmailJS SDK v3 (browser global) -->
+  <!-- EmailJS SDK v3 (global object) -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script>
-    emailjs.init("zOnUOx-UpvwgXCG8a"); // Your EmailJS public key
-    window.emailjs = emailjs; // Make it globally accessible
+    emailjs.init("zOnUOx-UpvwgXCG8a"); // your public key
+    window.emailjs = emailjs;
   </script>
 </head>
 <body>
@@ -85,7 +77,7 @@
 
   <button id="exportBtn">Export Data</button>
 
-  <!-- Load dashboard logic -->
+  <!-- Load business logic -->
   <script type="module" src="scripts/dashboard.js"></script>
 </body>
 </html>
