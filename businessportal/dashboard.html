@@ -279,6 +279,15 @@ body {
 
 <script type="module" src="scripts/dashboard.js"></script>
 
+<script>
+  const sendHeight = () => {
+    const height = document.body.scrollHeight;
+    window.parent.postMessage({ type: 'resize', height }, '*');
+  };
+
+  window.addEventListener('load', sendHeight);
+  window.addEventListener('resize', sendHeight);
+</script>
 
 
 </head>
