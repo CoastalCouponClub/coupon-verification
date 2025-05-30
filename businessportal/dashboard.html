@@ -16,14 +16,20 @@
       src: url('ABeeZee-Regular.ttf') format('truetype');
     }
 
-    body {
-      font-family: 'ABeeZee', sans-serif;
-      background-color: #fefef8;
+    html, body {
       margin: 0;
       padding: 0;
+      font-family: 'ABeeZee', sans-serif;
+      background-color: #fefef8;
       overflow-x: hidden;
+      height: 100%;
+    }
+
+    body {
       display: flex;
       justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
     }
 
     .dashboard-container {
@@ -38,14 +44,17 @@
       border-radius: 12px;
       padding: 30px;
       background-color: #fefef8;
-      position: relative;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      box-sizing: border-box;
     }
 
     h1 {
       font-family: 'Super Funtime', cursive;
       text-align: center;
       font-size: 2.5em;
-      margin-top: 0;
+      margin: 0 0 30px;
       color: #222d47;
     }
 
@@ -54,6 +63,7 @@
       flex-wrap: wrap;
       justify-content: space-between;
       gap: 20px;
+      flex-grow: 1;
     }
 
     .left-column,
@@ -228,7 +238,7 @@
       }
 
       h2 {
-        font-size: 1.4em;
+        font-size: 1.5em;
       }
 
       #codeInput,
@@ -246,20 +256,20 @@
       }
 
       .dashboard-grid {
-        gap: 12px;
+        gap: 15px;
+      }
+
+      .section {
+        padding: 16px;
+      }
+
+      .form-message {
+        font-size: 0.95em;
       }
 
       .delete-button {
         font-size: 0.65em;
         padding: 3px 6px;
-      }
-
-      .section {
-        padding: 15px;
-      }
-
-      .form-message {
-        font-size: 0.95em;
       }
     }
   </style>
@@ -331,7 +341,7 @@
         </div>
       </div>
 
-      <div style="width: 100%; text-align: right; margin-top: 10px; padding-right: 10px;">
+      <div style="width: 100%; text-align: right; margin-top: 20px; padding-right: 10px;">
         <p style="font-size: 0.75em; color: #444; font-family: 'ABeeZee', sans-serif; margin: 0;">
           For technical support, contact
           <a href="mailto:admin@coastalcouponclub.com" style="color: #222D47; text-decoration: none;">
