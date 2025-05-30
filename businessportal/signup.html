@@ -8,7 +8,7 @@
   <style>
     @font-face {
       font-family: 'Super Funtime';
-      src: url('Super Funtime.ttf') format('truetype'); 
+      src: url('Super Funtime.ttf') format('truetype');
     }
 
     @font-face {
@@ -157,7 +157,6 @@
       <input type="email" id="signup-email" placeholder="Email" required />
       <input type="password" id="signup-password" placeholder="Password" required />
       <input type="text" id="signup-offer" placeholder="Coupon Offer (e.g., 50% off)" required />
-
       <select id="signup-redemption-limit" required>
         <option value="1">1</option>
         <option value="2">2</option>
@@ -166,7 +165,6 @@
         <option value="5">5</option>
         <option value="unlimited">Unlimited</option>
       </select>
-
       <select id="signup-reset-interval" required>
         <option value="none">None</option>
         <option value="daily">Daily</option>
@@ -174,7 +172,6 @@
         <option value="monthly">Monthly</option>
         <option value="yearly">Yearly</option>
       </select>
-
       <input type="text" id="signup-invite-code" placeholder="Invite Code" required />
 
       <button type="submit">Sign Up</button>
@@ -189,7 +186,6 @@
   </div>
 
   <script id="firebase-config" data-config="%7B%22apiKey%22%3A%22AIzaSyBJxxcGhuYspiZ9HRAlZgihgXLaA2FjPXc%22%2C%22authDomain%22%3A%22coastalcouponverifier.firebaseapp.com%22%2C%22projectId%22%3A%22coastalcouponverifier%22%2C%22storageBucket%22%3A%22coastalcouponverifier.firebasestorage.app%22%2C%22messagingSenderId%22%3A%22189807704712%22%2C%22appId%22%3A%221%3A189807704712%3Aweb%3A9427e68464115f388ebd3d%22%7D"></script>
-  <script id="invite-code" data-invite="{{ BUSINESS_SIGNUP_CODE }}"></script>
   <script type="module" src="scripts/auth.js"></script>
 </body>
 </html>
