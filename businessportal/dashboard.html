@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>Business Dashboard</title>
 
   <style>
@@ -48,6 +48,7 @@
       flex-direction: column;
       height: 100%;
       box-sizing: border-box;
+      overflow: hidden;
     }
 
     h1 {
@@ -70,6 +71,8 @@
     .right-column {
       flex: 1;
       min-width: 320px;
+      max-width: 100%;
+      box-sizing: border-box;
     }
 
     .section {
@@ -78,6 +81,8 @@
       border-radius: 12px;
       padding: 20px;
       margin-bottom: 20px;
+      overflow-wrap: break-word;
+      word-break: break-word;
     }
 
     h2 {
@@ -127,6 +132,8 @@
       background-color: #fefef8;
       flex: 1;
       min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .code-actions {
@@ -230,7 +237,7 @@
     /* Mobile View */
     @media (max-width: 600px) {
       .dashboard-wrapper {
-        padding: 20px 15px;
+        padding: 20px 10px;
       }
 
       h1 {
@@ -238,7 +245,7 @@
       }
 
       h2 {
-        font-size: 1.5em;
+        font-size: 1.4em;
       }
 
       #codeInput,
@@ -294,7 +301,6 @@
     <h1>Welcome to Your Dashboard</h1>
     <div class="dashboard-wrapper">
       <div class="dashboard-grid">
-        <!-- LEFT COLUMN -->
         <div class="left-column">
           <h2>Your Information</h2>
           <div class="section">
@@ -320,7 +326,6 @@
           </div>
         </div>
 
-        <!-- RIGHT COLUMN -->
         <div class="right-column">
           <h2>Verify Customer Code</h2>
           <div class="section">
