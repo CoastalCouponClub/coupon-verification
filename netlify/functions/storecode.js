@@ -1,3 +1,12 @@
+const { initializeApp } = require('firebase/app');
+const { getFirestore, doc, setDoc, serverTimestamp } = require('firebase/firestore');
+
+// ✅ DECODE your URL-encoded FIREBASE_CLIENT_CONFIG
+const firebaseConfig = JSON.parse(decodeURIComponent(process.env.FIREBASE_CLIENT_CONFIG));
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 exports.handler = async (event) => {
   try {
     console.log("Received event:", event.body);
@@ -20,7 +29,7 @@ exports.handler = async (event) => {
       isValid: true,
       timestamp: serverTimestamp(),
       redemptionCount: 0,
-      secret: null,
+      secret: null, // Strip secret from stored doc
     });
 
     console.log("Successfully stored code:", barcode);
