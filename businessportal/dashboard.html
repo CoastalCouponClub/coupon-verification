@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Business Dashboard</title>
 
-  <!-- Fonts + Styles -->
   <style>
     @font-face {
       font-family: 'Super Funtime';
@@ -21,48 +20,46 @@
       font-family: 'ABeeZee', sans-serif;
       background-color: #fefef8;
       margin: 0;
-      padding: 20px;
+      padding: 0;
       overflow-x: hidden;
+      display: flex;
+      justify-content: center;
     }
 
     .dashboard-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
       width: 100%;
+      max-width: 1300px;
+      padding: 20px;
+      box-sizing: border-box;
     }
 
     .dashboard-wrapper {
       border: 5px solid #222D47;
       border-radius: 12px;
-      padding: 20px 30px 30px;
-      max-width: 1200px;
-      width: 100%;
+      padding: 30px;
       background-color: #fefef8;
-      margin-top: 40px;
-      box-sizing: border-box;
+      position: relative;
     }
 
     h1 {
       font-family: 'Super Funtime', cursive;
       text-align: center;
       font-size: 2.5em;
-      margin: 0;
-      padding: 10px 20px;
-      letter-spacing: 1px;
+      margin-top: 0;
       color: #222d47;
-      background-color: #fefef8;
     }
 
     .dashboard-grid {
       display: flex;
-      gap: 20px;
+      flex-wrap: wrap;
       justify-content: space-between;
+      gap: 20px;
     }
 
-    .left-column, .right-column {
+    .left-column,
+    .right-column {
       flex: 1;
-      min-width: 0;
+      min-width: 320px;
     }
 
     .section {
@@ -76,17 +73,20 @@
     h2 {
       font-family: 'Super Funtime', cursive;
       font-size: 1.75em;
-      margin: 0 0 10px 0;
-      letter-spacing: 1px;
+      margin: 0 0 10px;
       color: #222d47;
       text-align: center;
     }
 
-    #business-info p, #analytics p {
+    #business-info p,
+    #analytics p {
       margin: 6px 0;
     }
 
-    #logoutBtn, #verifyBtn, #redeemBtn, #doneBtn {
+    #logoutBtn,
+    #verifyBtn,
+    #redeemBtn,
+    #doneBtn {
       font-family: 'Super Funtime', cursive;
       font-weight: bold;
       background-color: #fefef8;
@@ -104,7 +104,8 @@
       margin-left: 10px;
     }
 
-    #redeemBtn, #doneBtn {
+    #redeemBtn,
+    #doneBtn {
       display: none;
     }
 
@@ -141,8 +142,7 @@
       border: 2px solid #222D47;
       border-radius: 10px;
       cursor: pointer;
-      letter-spacing: 2px;
-      font-size: .75em;
+      font-size: 0.75em;
     }
 
     #redemptionHistorySection {
@@ -158,11 +158,6 @@
       font-weight: bold;
       text-decoration: none;
       color: #222D47;
-      letter-spacing: .8px;
-    }
-
-    #edit-offer-link:hover {
-      text-decoration: underline;
     }
 
     #analytics-note {
@@ -170,7 +165,6 @@
       font-weight: bold;
       margin-top: 10px;
       color: #222D47;
-      letter-spacing: .8px;
     }
 
     #analytics-note a {
@@ -211,8 +205,20 @@
       border: 2px solid #9d1b1b;
     }
 
-    /* Tablet */
+    /* Tablet View */
     @media (max-width: 1024px) {
+      .dashboard-grid {
+        flex-direction: column;
+      }
+
+      .left-column,
+      .right-column {
+        width: 100%;
+      }
+    }
+
+    /* Mobile View */
+    @media (max-width: 600px) {
       .dashboard-wrapper {
         padding: 20px 15px;
       }
@@ -222,20 +228,7 @@
       }
 
       h2 {
-        font-size: 1.5em;
-      }
-    }
-
-    /* Mobile */
-    @media (max-width: 768px) {
-      .dashboard-grid {
-        flex-direction: column;
-      }
-
-      .code-actions,
-      .info-actions {
-        flex-direction: column;
-        align-items: stretch;
+        font-size: 1.4em;
       }
 
       #codeInput,
@@ -246,17 +239,27 @@
         width: 100%;
       }
 
-      h1 {
-        font-size: 1.75em;
-        padding: 0;
+      .code-actions,
+      .info-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .dashboard-grid {
+        gap: 12px;
+      }
+
+      .delete-button {
+        font-size: 0.65em;
+        padding: 3px 6px;
       }
 
       .section {
         padding: 15px;
       }
 
-      .dashboard-wrapper {
-        padding: 15px;
+      .form-message {
+        font-size: 0.95em;
       }
     }
   </style>
@@ -264,11 +267,13 @@
   <!-- Firebase Config -->
   <script id="firebase-config" data-config="%7B%22apiKey%22%3A%22AIzaSyBJxxcGhuYspiZ9HRAlZgihgXLaA2FjPXc%22%2C%22authDomain%22%3A%22coastalcouponverifier.firebaseapp.com%22%2C%22projectId%22%3A%22coastalcouponverifier%22%2C%22storageBucket%22%3A%22coastalcouponverifier.firebasestorage.app%22%2C%22messagingSenderId%22%3A%22189807704712%22%2C%22appId%22%3A%221%3A189807704712%3Aweb%3A9427e68464115f388ebd3d%22%7D"></script>
   <script type="module" src="scripts/dashboard.js"></script>
+
   <script>
     const sendHeight = () => {
       const height = document.body.scrollHeight;
       window.parent.postMessage({ type: 'resize', height }, '*');
     };
+
     window.addEventListener('load', sendHeight);
     window.addEventListener('resize', sendHeight);
   </script>
@@ -279,15 +284,17 @@
     <h1>Welcome to Your Dashboard</h1>
     <div class="dashboard-wrapper">
       <div class="dashboard-grid">
-        <!-- LEFT SIDE -->
+        <!-- LEFT COLUMN -->
         <div class="left-column">
           <h2>Your Information</h2>
           <div class="section">
             <div id="business-info"></div>
             <div class="info-actions">
-              <div style="line-height: 1.2; margin-bottom: 5px;">
+              <div>
                 <a id="edit-offer-link" href="https://forms.gle/v78Uoy89SkicjR486" target="_blank">Edit Offer (Form Submission)</a><br>
-                <span style="font-size: 0.75em; color: #9d1b1b; font-weight: bold;">*Submit at least 2 weeks before desired implementation date</span>
+                <span style="font-size: 0.75em; color: #9d1b1b; font-weight: bold;">
+                  *Submit at least 2 weeks before desired implementation date
+                </span>
               </div>
               <button id="logoutBtn">Log Out</button>
             </div>
@@ -303,7 +310,7 @@
           </div>
         </div>
 
-        <!-- RIGHT SIDE -->
+        <!-- RIGHT COLUMN -->
         <div class="right-column">
           <h2>Verify Customer Code</h2>
           <div class="section">
