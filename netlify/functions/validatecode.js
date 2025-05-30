@@ -1,7 +1,8 @@
 const { initializeApp } = require('firebase/app');
 const { getFirestore, doc, getDoc } = require('firebase/firestore');
 
-const firebaseConfig = JSON.parse(process.env.FIREBASE_CLIENT_CONFIG);
+const firebaseConfig = JSON.parse(decodeURIComponent(process.env.FIREBASE_CLIENT_CONFIG));
+
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
