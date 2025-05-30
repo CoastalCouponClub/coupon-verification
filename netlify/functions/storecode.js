@@ -1,14 +1,9 @@
-const admin = require("firebase-admin");
+const { initializeApp } = require('firebase/app');
+const { getFirestore, doc, setDoc, serverTimestamp } = require('firebase/firestore');
 
-if (!admin.apps.length) {
-  const serviceAccount = JSON.parse(process.env.FIREBASE_ADMIN_KEY); // Store this in Netlify ENV
-
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-}
-
-const db = admin.firestore();
+const firebaseConfig = JSON.parse(process.env.FIREBASE_CLIENT_CONFIG);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 exports.handler = async (event) => {
   try {
@@ -23,12 +18,13 @@ exports.handler = async (event) => {
       };
     }
 
-    const codeRef = db.collection('verifiedCodes').doc(barcode);
+    const codeRef = doc(db, 'verifiedCodes', barcode);
 
-    await codeRef.set({
+    await setDoc(codeRef, {
       isValid: true,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      timestamp: serverTimestamp(),
       redemptionCount: 0,
+      secret: "ccc_hook_91df72fa14", // ✅ Include secret ONLY for validation
     });
 
     return {
