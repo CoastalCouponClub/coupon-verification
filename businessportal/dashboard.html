@@ -58,12 +58,26 @@
       color: #222D47;
     }
 
-    h2 {
+    .collapsible-header {
       font-family: 'Super Funtime', cursive;
       font-size: 1.5em;
       text-align: center;
       color: #222D47;
-      margin-top: 20px;
+      cursor: pointer;
+      margin: 20px 0 10px;
+      transition: background 0.3s ease;
+    }
+
+    .collapsible-header:hover {
+      text-decoration: underline;
+    }
+
+    .collapsible-content {
+      display: none;
+    }
+
+    .collapsible-section.open .collapsible-content {
+      display: block;
     }
 
     .section {
@@ -231,43 +245,56 @@
     window.addEventListener('load', sendHeight);
     window.addEventListener('resize', sendHeight);
   </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.collapsible-header').forEach(header => {
+        header.addEventListener('click', () => {
+          const section = header.parentElement;
+          section.classList.toggle('open');
+          sendHeight();
+        });
+      });
+    });
+  </script>
 </head>
-
 <body>
   <div class="dashboard-container">
     <h1>Welcome to Your Dashboard</h1>
     <div class="dashboard-wrapper">
-      <h2>Your Information</h2>
-      <div class="section">
-        <div class="inner-box" id="business-info"></div>
-        <a id="edit-offer-link" href="https://forms.gle/v78Uoy89SkicjR486" target="_blank">Edit Offer (Form Submission)</a>
-        <p style="font-size: 0.85em; color: #9d1b1b; font-weight: bold;">
-          *Submit at least 2 weeks before desired implementation date
-        </p>
-        <div class="info-actions">
-          <button id="logoutBtn">Log Out</button>
+
+      <div class="collapsible-section open">
+        <div class="collapsible-header">Your Information</div>
+        <div class="section collapsible-content">
+          <div class="inner-box" id="business-info"></div>
+          <a id="edit-offer-link" href="https://forms.gle/v78Uoy89SkicjR486" target="_blank">Edit Offer (Form Submission)</a>
+          <p style="font-size: 0.85em; color: #9d1b1b; font-weight: bold;">*Submit at least 2 weeks before desired implementation date</p>
+          <div class="info-actions">
+            <button id="logoutBtn">Log Out</button>
+          </div>
         </div>
       </div>
 
-      <h2>Analytics</h2>
-      <div class="section" id="analytics">
-        <p><strong>Active Customers:</strong> <span id="activeCustomers">0</span></p>
-        <p><strong>Coupon Redemptions:</strong> <span id="totalRedemptions">0</span></p>
-        <p id="analytics-note">
-          <strong>Email</strong> contact@coastalcouponclub.com<br>to export data
-        </p>
+      <div class="collapsible-section open">
+        <div class="collapsible-header">Analytics</div>
+        <div class="section collapsible-content" id="analytics">
+          <p><strong>Active Customers:</strong> <span id="activeCustomers">0</span></p>
+          <p><strong>Coupon Redemptions:</strong> <span id="totalRedemptions">0</span></p>
+          <p id="analytics-note"><strong>Email</strong> contact@coastalcouponclub.com<br>to export data</p>
+        </div>
       </div>
 
-      <h2>Verify Customer Code</h2>
-      <div class="section">
-        <div class="code-actions">
-          <input type="text" id="codeInput" placeholder="Enter 10 Digit Code" />
-          <button id="verifyBtn">Verify Code</button>
-          <button id="redeemBtn">Redeem Code</button>
-          <button id="doneBtn">Done</button>
+      <div class="collapsible-section open">
+        <div class="collapsible-header">Verify Customer Code</div>
+        <div class="section collapsible-content">
+          <div class="code-actions">
+            <input type="text" id="codeInput" placeholder="Enter 10 Digit Code" />
+            <button id="verifyBtn">Verify Code</button>
+            <button id="redeemBtn">Redeem Code</button>
+            <button id="doneBtn">Done</button>
+          </div>
+          <p id="redeemStatus"></p>
+          <div id="dashboardMessage" class="form-message" style="display: none;"></div>
         </div>
-        <p id="redeemStatus"></p>
-        <div id="dashboardMessage" class="form-message" style="display: none;"></div>
       </div>
 
       <div class="section" id="redemptionHistorySection">
