@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Business Dashboard</title>
 
-  <!-- Fonts + Styles --> 
   <style>
     @font-face {
       font-family: 'Super Funtime';
@@ -21,94 +20,40 @@
       font-family: 'ABeeZee', sans-serif;
       background-color: #fefef8;
       margin: 0;
-      padding: 20px;
+      padding: 0;
       display: flex;
       justify-content: center;
+      overflow-x: hidden;
     }
 
     .dashboard-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      position: relative;
       width: 100%;
+      max-width: 1200px;
+      padding: 0 10px;
+      box-sizing: border-box;
     }
-/* Ensure the body doesn't overflow horizontally */
-body {
-  overflow-x: hidden;
-  margin: 0;
-  padding: 0;
-}
-
-/* Make containers responsive */
-.login-wrapper,
-.dashboard-wrapper {
-  max-width: 100%;
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-/* Adjust layout for smaller screens */
-@media (max-width: 600px) {
-  .dashboard-grid {
-    flex-direction: column;
-  }
-
-  .left-column,
-  .right-column {
-    width: 100%;
-  }
-
-  .login-wrapper,
-  .dashboard-wrapper {
-    padding: 10px;
-  }
-}
 
     .dashboard-wrapper {
       border: 5px solid #222D47;
       border-radius: 12px;
-      padding: 20px 30px 30px;
-      max-width: 1200px;
-      width: 100%;
+      padding: 20px;
       background-color: #fefef8;
-      margin-top: 40px;
-      position: relative;
       box-sizing: border-box;
+      width: 100%;
     }
 
     h1 {
       font-family: 'Super Funtime', cursive;
       text-align: center;
-      font-size: 2.5em;
-      margin: 0;
-      padding: 10px 20px;
+      font-size: 2em;
+      margin: 40px 0 20px;
+      padding: 0 10px;
       letter-spacing: 1px;
       color: #222d47;
-      background-color: #fefef8;
-      position: absolute;
-      top: -30px;
-      z-index: 1;
-    }
-
-    .dashboard-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: space-between;
-    }
-
-    .left-column, .right-column {
-      flex: 1;
-      min-width: 320px;
-    }
-
-    .section {
-      background: #EEFAFA;
-      border: 5px solid #222D47;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 20px;
+      position: static;
     }
 
     h2 {
@@ -120,11 +65,36 @@ body {
       text-align: center;
     }
 
-    #business-info p, #analytics p {
+    .dashboard-grid {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .left-column,
+    .right-column {
+      flex: 1 1 100%;
+      min-width: 0;
+    }
+
+    .section {
+      background: #EEFAFA;
+      border: 5px solid #222D47;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    #business-info p,
+    #analytics p {
       margin: 6px 0;
     }
 
-    #logoutBtn, #verifyBtn, #redeemBtn, #doneBtn {
+    #logoutBtn,
+    #verifyBtn,
+    #redeemBtn,
+    #doneBtn {
       font-family: 'Super Funtime', cursive;
       font-weight: bold;
       background-color: #fefef8;
@@ -142,7 +112,8 @@ body {
       margin-left: 10px;
     }
 
-    #redeemBtn, #doneBtn {
+    #redeemBtn,
+    #doneBtn {
       display: none;
     }
 
@@ -250,10 +221,6 @@ body {
     }
 
     @media (max-width: 768px) {
-      .dashboard-grid {
-        flex-direction: column;
-      }
-
       .code-actions {
         flex-direction: column;
         align-items: stretch;
@@ -274,43 +241,37 @@ body {
     }
   </style>
 
-  <!-- Inject Firebase config from Netlify into global window object -->
-<script id="firebase-config" data-config="%7B%22apiKey%22%3A%22AIzaSyBJxxcGhuYspiZ9HRAlZgihgXLaA2FjPXc%22%2C%22authDomain%22%3A%22coastalcouponverifier.firebaseapp.com%22%2C%22projectId%22%3A%22coastalcouponverifier%22%2C%22storageBucket%22%3A%22coastalcouponverifier.firebasestorage.app%22%2C%22messagingSenderId%22%3A%22189807704712%22%2C%22appId%22%3A%221%3A189807704712%3Aweb%3A9427e68464115f388ebd3d%22%7D"></script>
+  <!-- Inject Firebase config securely -->
+  <script id="firebase-config" data-config="%7B%22apiKey%22%3A%22AIzaSyBJxxcGhuYspiZ9HRAlZgihgXLaA2FjPXc%22%2C%22authDomain%22%3A%22coastalcouponverifier.firebaseapp.com%22%2C%22projectId%22%3A%22coastalcouponverifier%22%2C%22storageBucket%22%3A%22coastalcouponverifier.firebasestorage.app%22%2C%22messagingSenderId%22%3A%22189807704712%22%2C%22appId%22%3A%221%3A189807704712%3Aweb%3A9427e68464115f388ebd3d%22%7D"></script>
 
-<script type="module" src="scripts/dashboard.js"></script>
-
-<script>
-  const sendHeight = () => {
-    const height = document.body.scrollHeight;
-    window.parent.postMessage({ type: 'resize', height }, '*');
-  };
-
-  window.addEventListener('load', sendHeight);
-  window.addEventListener('resize', sendHeight);
-</script>
-
-
+  <script type="module" src="scripts/dashboard.js"></script>
+  <script>
+    const sendHeight = () => {
+      const height = document.body.scrollHeight;
+      window.parent.postMessage({ type: 'resize', height }, '*');
+    };
+    window.addEventListener('load', sendHeight);
+    window.addEventListener('resize', sendHeight);
+  </script>
 </head>
+
 <body>
   <div class="dashboard-container">
-    
     <h1>Welcome to Your Dashboard</h1>
     <div class="dashboard-wrapper">
       <div class="dashboard-grid">
-        <!-- LEFT SIDE -->
+        <!-- LEFT COLUMN -->
         <div class="left-column">
           <h2>Your Information</h2>
           <div class="section">
             <div id="business-info"></div>
             <div class="info-actions">
               <div style="line-height: 1.2; margin-bottom: 5px;">
-  <a id="edit-offer-link" href="https://forms.gle/v78Uoy89SkicjR486" target="_blank" style="display: inline-block;">Edit Offer (Form Submission)</a><br>
-  <span style="font-size: 0.75em; color: #9d1b1b; font-weight: bold;">
-    *Submit at least 2 weeks before desired implementation date
-  </span>
-</div>
-
-
+                <a id="edit-offer-link" href="https://forms.gle/v78Uoy89SkicjR486" target="_blank">Edit Offer (Form Submission)</a><br>
+                <span style="font-size: 0.75em; color: #9d1b1b; font-weight: bold;">
+                  *Submit at least 2 weeks before desired implementation date
+                </span>
+              </div>
               <button id="logoutBtn">Log Out</button>
             </div>
           </div>
@@ -325,7 +286,7 @@ body {
           </div>
         </div>
 
-        <!-- RIGHT SIDE -->
+        <!-- RIGHT COLUMN -->
         <div class="right-column">
           <h2>Verify Customer Code</h2>
           <div class="section">
@@ -345,19 +306,16 @@ body {
           </div>
         </div>
       </div>
-      <div style="width: 100%; text-align: right; margin-top: 10px; padding-right: 10px;">
-  <p style="font-size: 0.75em; color: #444; font-family: 'ABeeZee', sans-serif; margin: 0;">
-    For technical support, contact
-    <a href="mailto:admin@coastalcouponclub.com" style="color: #222D47; text-decoration: none;">
-      admin@coastalcouponclub.com
-    </a>
-  </p>
-</div>
 
+      <div style="width: 100%; text-align: right; margin-top: 10px; padding-right: 10px;">
+        <p style="font-size: 0.75em; color: #444; font-family: 'ABeeZee', sans-serif; margin: 0;">
+          For technical support, contact
+          <a href="mailto:admin@coastalcouponclub.com" style="color: #222D47; text-decoration: none;">
+            admin@coastalcouponclub.com
+          </a>
+        </p>
+      </div>
     </div>
   </div>
-  
-
-
 </body>
 </html>
