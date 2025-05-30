@@ -18,7 +18,7 @@ const configScript = document.querySelector('script[data-config]');
 const firebaseConfig = JSON.parse(decodeURIComponent(configScript.getAttribute('data-config')));
 
 // ✅ Hardcoded invite code
-const inviteCode = "coastal2025"; // Replace with your actual invite code
+const inviteCode = "cccinviteonly25"; // Replace with your actual invite code
 
 // ✅ Initialize Firebase
 const app = initializeApp(firebaseConfig);
