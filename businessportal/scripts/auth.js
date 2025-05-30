@@ -17,9 +17,8 @@ import {
 const configScript = document.querySelector('script[data-config]');
 const firebaseConfig = JSON.parse(decodeURIComponent(configScript.getAttribute('data-config')));
 
-// ✅ Load invite code from Netlify-injected script tag
-const envScript = document.querySelector('script[data-invite]');
-const inviteCode = envScript.getAttribute('data-invite');
+// ✅ Hardcoded invite code
+const inviteCode = "coastal2025"; // Replace with your actual invite code
 
 // ✅ Initialize Firebase
 const app = initializeApp(firebaseConfig);
