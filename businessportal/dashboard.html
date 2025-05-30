@@ -33,6 +33,37 @@
       position: relative;
       width: 100%;
     }
+/* Ensure the body doesn't overflow horizontally */
+body {
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* Make containers responsive */
+.login-wrapper,
+.dashboard-wrapper {
+  max-width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Adjust layout for smaller screens */
+@media (max-width: 600px) {
+  .dashboard-grid {
+    flex-direction: column;
+  }
+
+  .left-column,
+  .right-column {
+    width: 100%;
+  }
+
+  .login-wrapper,
+  .dashboard-wrapper {
+    padding: 10px;
+  }
+}
 
     .dashboard-wrapper {
       border: 5px solid #222D47;
