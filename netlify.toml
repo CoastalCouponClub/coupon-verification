@@ -2,4 +2,5 @@
 directory = "netlify/functions"
 
 [functions."expirecodes"]
-  schedule = "@daily"
+  schedule = "*/5 * * * *"
+
