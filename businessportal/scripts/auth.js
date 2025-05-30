@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import {
   getAuth,
   createUserWithEmailAndPassword,
-  signInWithEmailAndPassword, 
+  signInWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore,
@@ -13,16 +13,20 @@ import {
   addDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// ✅ Securely load Firebase config from Netlify-injected script tag
+// ✅ Load Firebase config from Netlify-injected script tag
 const configScript = document.querySelector('script[data-config]');
 const firebaseConfig = JSON.parse(decodeURIComponent(configScript.getAttribute('data-config')));
+
+// ✅ Load invite code from Netlify-injected script tag
+const envScript = document.querySelector('script[data-invite]');
+const inviteCode = envScript.getAttribute('data-invite');
 
 // ✅ Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Auto-resize support for embedded use
+// Auto-resize support for embeds
 if (window.ResizeObserver) {
   const resizeObserver = new ResizeObserver(() => {
     window.parent?.postMessage({ type: 'resize', height: document.body.scrollHeight }, '*');
@@ -77,6 +81,15 @@ if (signupForm) {
     const couponOffer = signupForm["signup-offer"].value;
     const redemptionLimit = signupForm["signup-redemption-limit"].value;
     const resetInterval = signupForm["signup-reset-interval"].value;
+    const enteredInvite = signupForm["signup-invite-code"].value.trim();
+
+    if (enteredInvite !== inviteCode) {
+      signupMessage.textContent = "Signup failed: Invalid invite code.";
+      signupMessage.className = "form-message error";
+      signupMessage.style.display = "block";
+      signupMessage.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -96,27 +109,20 @@ if (signupForm) {
         timestamp: serverTimestamp()
       });
 
-      if (signupMessage) {
-        signupMessage.textContent = "Account created successfully!";
-        signupMessage.className = "form-message success";
-        signupMessage.style.display = "block";
-        signupMessage.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-
+      signupMessage.textContent = "Account created successfully!";
+      signupMessage.className = "form-message success";
+      signupMessage.style.display = "block";
+      signupMessage.scrollIntoView({ behavior: "smooth", block: "center" });
       signupForm.reset();
 
       setTimeout(() => {
         window.location.href = "/businessPortal/dashboard.html";
       }, 1500);
     } catch (error) {
-      if (signupMessage) {
-        signupMessage.textContent = "Signup failed: " + error.message;
-        signupMessage.className = "form-message error";
-        signupMessage.style.display = "block";
-        signupMessage.scrollIntoView({ behavior: "smooth", block: "center" });
-      } else {
-        alert("Signup failed: " + error.message);
-      }
+      signupMessage.textContent = "Signup failed: " + error.message;
+      signupMessage.className = "form-message error";
+      signupMessage.style.display = "block";
+      signupMessage.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   });
 }
