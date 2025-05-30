@@ -17,28 +17,9 @@
     }
 
     * {
-  box-sizing: border-box;
-  max-width: 100%;
-}
-
-html, body {
-  overflow-x: hidden;
-}
-
-.dashboard-wrapper,
-.section,
-.left-column,
-.right-column,
-.dashboard-grid {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-a, p, span, strong, h1, h2 {
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
+      box-sizing: border-box;
+      max-width: 100%;
+    }
 
     html, body {
       margin: 0;
@@ -50,7 +31,6 @@ a, p, span, strong, h1, h2 {
       width: 100%;
       height: auto;
       min-height: 100vh;
-      box-sizing: border-box;
     }
 
     body {
@@ -61,7 +41,6 @@ a, p, span, strong, h1, h2 {
       width: 100%;
       max-width: 1300px;
       padding: 20px;
-      box-sizing: border-box;
       margin: auto;
     }
 
@@ -72,7 +51,6 @@ a, p, span, strong, h1, h2 {
       background-color: #fefef8;
       display: flex;
       flex-direction: column;
-      box-sizing: border-box;
     }
 
     h1 {
@@ -95,7 +73,6 @@ a, p, span, strong, h1, h2 {
       flex: 1;
       min-width: 320px;
       max-width: 100%;
-      box-sizing: border-box;
     }
 
     .section {
@@ -104,7 +81,7 @@ a, p, span, strong, h1, h2 {
       border-radius: 12px;
       padding: 20px;
       margin-bottom: 20px;
-      overflow-wrap: break-word;
+      overflow-x: hidden;
       word-break: break-word;
     }
 
@@ -156,7 +133,6 @@ a, p, span, strong, h1, h2 {
       flex: 1;
       min-width: 0;
       width: 100%;
-      box-sizing: border-box;
     }
 
     .code-actions {
@@ -205,6 +181,7 @@ a, p, span, strong, h1, h2 {
       font-weight: bold;
       margin-top: 10px;
       color: #222D47;
+      word-break: break-word;
     }
 
     #analytics-note a {
@@ -257,67 +234,73 @@ a, p, span, strong, h1, h2 {
       }
     }
 
-    /* Mobile View */
-@media (max-width: 600px) {
-  html, body {
-    width: 100%;
-    overflow-x: hidden;
-  }
+    /* FINAL MOBILE POLISH */
+    @media (max-width: 600px) {
+      html, body {
+        font-size: 14px;
+      }
 
-  .dashboard-wrapper {
-    padding: 20px 10px;
-  }
+      h1 {
+        font-size: 1.8em;
+        line-height: 1.2em;
+        text-align: center;
+      }
 
-  h1 {
-    font-size: 2em;
-    text-align: center;
-  }
+      h2 {
+        font-size: 1.3em;
+        line-height: 1.2em;
+        text-align: center;
+      }
 
-  h2 {
-    font-size: 1.4em;
-    text-align: center;
-  }
+      #codeInput,
+      #verifyBtn,
+      #redeemBtn,
+      #doneBtn,
+      #logoutBtn {
+        width: 100%;
+      }
 
-  #codeInput,
-  #verifyBtn,
-  #redeemBtn,
-  #doneBtn,
-  #logoutBtn {
-    width: 100%;
-  }
+      .dashboard-grid,
+      .left-column,
+      .right-column,
+      .section {
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+        box-sizing: border-box;
+      }
 
-  .code-actions,
-  .info-actions {
-    flex-direction: column;
-    align-items: stretch;
-    width: 100%;
-  }
+      .code-actions,
+      .info-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+      }
 
-  .dashboard-grid,
-  .left-column,
-  .right-column,
-  .section {
-    width: 100% !important;
-    max-width: 100vw !important;
-    box-sizing: border-box;
-    overflow-wrap: break-word;
-    word-break: break-word;
-  }
+      .section {
+        padding: 14px;
+      }
 
-  .form-message {
-    font-size: 0.95em;
-  }
+      .dashboard-container {
+        padding: 12px;
+      }
 
-  .delete-button {
-    font-size: 0.65em;
-    padding: 3px 6px;
-  }
+      .form-message {
+        font-size: 0.9em;
+      }
 
-  a {
-    word-break: break-all;
-  }
-}
+      .delete-button {
+        font-size: 0.6em;
+        padding: 2px 4px;
+      }
 
+      #analytics-note,
+      a {
+        font-size: 0.9em;
+        word-break: break-word;
+        display: inline-block;
+      }
+    }
   </style>
 
   <!-- Firebase Config -->
@@ -329,7 +312,6 @@ a, p, span, strong, h1, h2 {
       const height = document.body.scrollHeight;
       window.parent.postMessage({ type: 'resize', height }, '*');
     };
-
     window.addEventListener('load', sendHeight);
     window.addEventListener('resize', sendHeight);
   </script>
