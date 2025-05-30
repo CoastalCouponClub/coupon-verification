@@ -1,349 +1,151 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Business Dashboard</title>
+<!-- START OF HTML HEAD -->
 
-  <style>
-    @font-face {
-      font-family: 'Super Funtime';
-      src: url('Super Funtime.ttf') format('truetype');
-    }
+<style>
+  /* DESKTOP LAYOUT RESTORED */
+  .dashboard-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 20px;
+  }
 
-    @font-face {
-      font-family: 'ABeeZee';
-      src: url('ABeeZee-Regular.ttf') format('truetype');
-    }
+  .left-column,
+  .right-column {
+    flex: 1;
+    min-width: 320px;
+    max-width: 100%;
+  }
 
-    * {
-      box-sizing: border-box;
-      max-width: 100%;
-    }
+  /* SECTION WRAPPING */
+  .section {
+    background-color: #EEFAFA;
+    border: 5px solid #222D47;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    overflow-wrap: break-word;
+  }
 
-    html, body {
-      margin: 0;
-      padding: 0;
-      font-family: 'ABeeZee', sans-serif;
-      background-color: #fefef8;
-      overflow-x: hidden;
-      overflow-y: auto;
-      width: 100%;
-      height: auto;
-      min-height: 100vh;
-    }
-
-    body {
-      display: block;
-    }
-
-    .dashboard-container {
-      width: 100%;
-      max-width: 1300px;
-      padding: 20px;
-      margin: 0 auto;
-    }
-
-    .dashboard-wrapper {
-      border: 5px solid #222D47;
-      border-radius: 20px;
-      padding: 30px;
-      background-color: #fefef8;
-    }
-
-    h1 {
-      font-family: 'Super Funtime', cursive;
-      text-align: center;
-      font-size: 2.5em;
-      margin: 0 0 30px;
-      color: #222d47;
-    }
-
-    h2 {
-      font-family: 'Super Funtime', cursive;
-      font-size: 1.75em;
-      margin: 0 0 10px;
-      color: #222d47;
-      text-align: center;
-    }
-
+  /* MOBILE OVERRIDES */
+  @media (max-width: 768px) {
     .dashboard-grid {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      gap: 20px;
+      flex-direction: column;
     }
 
     .left-column,
     .right-column {
-      flex: 1;
-      min-width: 320px;
-      max-width: 100%;
+      width: 100%;
     }
 
-    .section {
-      background-color: #EEFAFA;
-      border: 5px solid #222D47;
-      border-radius: 20px;
+    .dashboard-container {
+      padding: 12px;
+    }
+
+    .dashboard-wrapper {
       padding: 20px;
-      margin-bottom: 20px;
-      overflow-wrap: break-word;
     }
 
-    .inner-box {
-      border: 4px solid #222D47;
-      border-radius: 15px;
-      padding: 10px;
-      margin-top: 10px;
+    h1 {
+      font-size: 1.7em;
+      text-align: center;
     }
 
-    #business-info p,
-    #analytics p,
-    #redeemStatus,
-    #dashboardMessage,
-    .section p {
-      font-size: 0.95em;
-      margin: 6px 0;
-      color: #222D47;
+    h2 {
+      font-size: 1.3em;
+      text-align: center;
     }
 
-    .info-actions,
-    .code-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
+    #codeInput,
     #logoutBtn,
     #verifyBtn,
     #redeemBtn,
     #doneBtn {
-      font-family: 'Super Funtime', cursive;
-      background-color: #fefef8;
-      border: 3px solid #222D47;
-      border-radius: 12px;
-      padding: 10px;
-      font-size: 1em;
-      cursor: pointer;
       width: 100%;
     }
 
-    #verifyBtn {
-      background-color: #222D47;
-      color: white;
+    .info-actions,
+    .code-actions {
+      flex-direction: column;
+      gap: 10px;
+      align-items: stretch;
     }
 
-    #redeemBtn,
-    #doneBtn {
-      display: none;
-    }
-
-    #codeInput {
-      font-size: 1em;
-      padding: 12px;
-      border: 3px solid #222D47;
-      border-radius: 15px;
-      background-color: #fefef8;
-      width: 100%;
-    }
-
-    #edit-offer-link {
-      font-family: 'Super Funtime', cursive;
-      font-weight: bold;
-      text-decoration: none;
-      color: #222D47;
-      display: inline-block;
-      margin-top: 10px;
-    }
-
-    #analytics-note {
-      font-family: 'Super Funtime', cursive;
+    .form-message,
+    .section p,
+    .delete-button {
       font-size: 0.9em;
-      margin-top: 10px;
-      color: #222D47;
-      word-break: break-word;
-    }
-
-    .form-message {
-      font-size: 0.9em;
-      text-align: left;
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 10px;
-    }
-
-    .success {
-      background-color: #d0f0e8;
-      color: #1b4d3e;
-      border: 2px solid #1b4d3e;
-    }
-
-    .error {
-      background-color: #fde0e0;
-      color: #9d1b1b;
-      border: 2px solid #9d1b1b;
     }
 
     .delete-button {
-      font-size: 0.8em;
-      font-family: 'Super Funtime', cursive;
-      background-color: #fefef8;
-      border: 2px solid #222D47;
-      border-radius: 10px;
-      padding: 4px 10px;
-      cursor: pointer;
-      margin-left: 10px;
+      font-size: 0.75em;
+      padding: 4px 8px;
     }
 
-    #redemptionHistorySection {
-      display: none;
+    .section {
+      padding: 16px;
     }
+  }
+</style>
 
-    #redemptionHistory li {
-      font-size: 0.95em;
-      margin-bottom: 8px;
-      list-style: none;
-    }
+<!-- END OF HTML HEAD -->
 
-    #redemptionHistory li::before {
-      content: "• ";
-    }
+<!-- START OF BODY LAYOUT -->
 
-    a {
-      word-break: break-word;
-    }
+<div class="dashboard-container">
+  <h1>Welcome to Your Dashboard</h1>
+  <div class="dashboard-wrapper">
+    <div class="dashboard-grid">
 
-    @media (max-width: 768px) {
-      .dashboard-grid {
-        flex-direction: column;
-      }
-
-      .left-column,
-      .right-column {
-        width: 100%;
-      }
-
-      .dashboard-container {
-        padding: 12px;
-      }
-
-      .dashboard-wrapper {
-        padding: 20px;
-      }
-
-      h1 {
-        font-size: 1.7em;
-        text-align: center;
-      }
-
-      h2 {
-        font-size: 1.3em;
-        text-align: center;
-      }
-
-      #codeInput,
-      #logoutBtn,
-      #verifyBtn,
-      #redeemBtn,
-      #doneBtn {
-        width: 100%;
-      }
-
-      .info-actions,
-      .code-actions {
-        flex-direction: column;
-        gap: 10px;
-        align-items: stretch;
-      }
-
-      .form-message,
-      .section p,
-      .delete-button {
-        font-size: 0.9em;
-      }
-
-      .delete-button {
-        font-size: 0.75em;
-        padding: 4px 8px;
-      }
-
-      .section {
-        padding: 16px;
-      }
-    }
-  </style>
-
-  <!-- Firebase Config -->
-  <script id="firebase-config" data-config="%7B%22apiKey%22%3A%22AIzaSyBJxxcGhuYspiZ9HRAlZgihgXLaA2FjPXc%22%2C%22authDomain%22%3A%22coastalcouponverifier.firebaseapp.com%22%2C%22projectId%22%3A%22coastalcouponverifier%22%2C%22storageBucket%22%3A%22coastalcouponverifier.firebasestorage.app%22%2C%22messagingSenderId%22%3A%22189807704712%22%2C%22appId%22%3A%221%3A189807704712%3Aweb%3A9427e68464115f388ebd3d%22%7D"></script>
-  <script type="module" src="scripts/dashboard.js"></script>
-
-  <script>
-    const sendHeight = () => {
-      const height = document.body.scrollHeight;
-      window.parent.postMessage({ type: 'resize', height }, '*');
-    };
-    window.addEventListener('load', sendHeight);
-    window.addEventListener('resize', sendHeight);
-  </script>
-</head>
-
-<body>
-  <div class="dashboard-container">
-    <h1>Welcome to Your Dashboard</h1>
-    <div class="dashboard-wrapper">
-      <div class="dashboard-grid">
-
-        <!-- LEFT COLUMN -->
-        <div class="left-column">
-          <h2>Your Information</h2>
-          <div class="section">
-            <div class="inner-box" id="business-info"></div>
-            <a id="edit-offer-link" href="https://forms.gle/v78Uoy89SkicjR486" target="_blank">Edit Offer (Form Submission)</a>
-            <p style="font-size: 0.85em; color: #9d1b1b; font-weight: bold;">
-              *Submit at least 2 weeks before desired implementation date
-            </p>
-            <div class="info-actions">
-              <button id="logoutBtn">Log Out</button>
-            </div>
-          </div>
-
-          <h2>Analytics</h2>
-          <div class="section" id="analytics">
-            <p><strong>Active Customers:</strong> <span id="activeCustomers">0</span></p>
-            <p><strong>Coupon Redemptions:</strong> <span id="totalRedemptions">0</span></p>
-            <p id="analytics-note">
-              <strong>Email</strong> contact@coastalcouponclub.com<br>to export data
-            </p>
+      <!-- LEFT COLUMN -->
+      <div class="left-column">
+        <h2>Your Information</h2>
+        <div class="section">
+          <div class="inner-box" id="business-info"></div>
+          <a id="edit-offer-link" href="https://forms.gle/v78Uoy89SkicjR486" target="_blank">Edit Offer (Form Submission)</a>
+          <p style="font-size: 0.85em; color: #9d1b1b; font-weight: bold;">
+            *Submit at least 2 weeks before desired implementation date
+          </p>
+          <div class="info-actions">
+            <button id="logoutBtn">Log Out</button>
           </div>
         </div>
 
-        <!-- RIGHT COLUMN -->
-        <div class="right-column">
-          <h2>Verify Customer Code</h2>
-          <div class="section">
-            <div class="code-actions">
-              <input type="text" id="codeInput" placeholder="Enter 10 Digit Code" />
-              <button id="verifyBtn">Verify Code</button>
-              <button id="redeemBtn">Redeem Code</button>
-              <button id="doneBtn">Done</button>
-            </div>
-            <p id="redeemStatus"></p>
-            <div id="dashboardMessage" class="form-message" style="display: none;"></div>
-          </div>
-
-          <div class="section" id="redemptionHistorySection">
-            <h2>Redemption Log</h2>
-            <ul id="redemptionHistory"></ul>
-          </div>
+        <h2>Analytics</h2>
+        <div class="section" id="analytics">
+          <p><strong>Active Customers:</strong> <span id="activeCustomers">0</span></p>
+          <p><strong>Coupon Redemptions:</strong> <span id="totalRedemptions">0</span></p>
+          <p id="analytics-note">
+            <strong>Email</strong> contact@coastalcouponclub.com<br>to export data
+          </p>
         </div>
       </div>
 
-      <div style="text-align: center; font-size: 0.9em; padding-top: 10px;">
-        For technical support, contact<br>
-        <a href="mailto:admin@coastalcouponclub.com">admin@coastalcouponclub.com</a>
+      <!-- RIGHT COLUMN -->
+      <div class="right-column">
+        <h2>Verify Customer Code</h2>
+        <div class="section">
+          <div class="code-actions">
+            <input type="text" id="codeInput" placeholder="Enter 10 Digit Code" />
+            <button id="verifyBtn">Verify Code</button>
+            <button id="redeemBtn">Redeem Code</button>
+            <button id="doneBtn">Done</button>
+          </div>
+          <p id="redeemStatus"></p>
+          <div id="dashboardMessage" class="form-message" style="display: none;"></div>
+        </div>
+
+        <div class="section" id="redemptionHistorySection">
+          <h2>Redemption Log</h2>
+          <ul id="redemptionHistory"></ul>
+        </div>
       </div>
     </div>
+
+    <div style="text-align: center; font-size: 0.9em; padding-top: 10px;">
+      For technical support, contact<br>
+      <a href="mailto:admin@coastalcouponclub.com">admin@coastalcouponclub.com</a>
+    </div>
   </div>
-</body>
-</html>
+</div>
+
+<!-- END OF BODY LAYOUT -->
