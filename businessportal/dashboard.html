@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Business Dashboard</title>
 
+  <!-- Fonts + Styles -->
   <style>
     @font-face {
       font-family: 'Super Funtime';
@@ -20,9 +21,7 @@
       font-family: 'ABeeZee', sans-serif;
       background-color: #fefef8;
       margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
+      padding: 20px;
       overflow-x: hidden;
     }
 
@@ -31,50 +30,38 @@
       flex-direction: column;
       align-items: center;
       width: 100%;
-      max-width: 1200px;
-      padding: 0 10px;
-      box-sizing: border-box;
     }
 
     .dashboard-wrapper {
       border: 5px solid #222D47;
       border-radius: 12px;
-      padding: 20px;
-      background-color: #fefef8;
-      box-sizing: border-box;
+      padding: 20px 30px 30px;
+      max-width: 1200px;
       width: 100%;
+      background-color: #fefef8;
+      margin-top: 40px;
+      box-sizing: border-box;
     }
 
     h1 {
       font-family: 'Super Funtime', cursive;
       text-align: center;
-      font-size: 2em;
-      margin: 40px 0 20px;
-      padding: 0 10px;
+      font-size: 2.5em;
+      margin: 0;
+      padding: 10px 20px;
       letter-spacing: 1px;
       color: #222d47;
-      position: static;
-    }
-
-    h2 {
-      font-family: 'Super Funtime', cursive;
-      font-size: 1.75em;
-      margin: 0 0 10px 0;
-      letter-spacing: 1px;
-      color: #222d47;
-      text-align: center;
+      background-color: #fefef8;
     }
 
     .dashboard-grid {
       display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
       gap: 20px;
+      justify-content: space-between;
     }
 
-    .left-column,
-    .right-column {
-      flex: 1 1 100%;
+    .left-column, .right-column {
+      flex: 1;
       min-width: 0;
     }
 
@@ -86,15 +73,20 @@
       margin-bottom: 20px;
     }
 
-    #business-info p,
-    #analytics p {
+    h2 {
+      font-family: 'Super Funtime', cursive;
+      font-size: 1.75em;
+      margin: 0 0 10px 0;
+      letter-spacing: 1px;
+      color: #222d47;
+      text-align: center;
+    }
+
+    #business-info p, #analytics p {
       margin: 6px 0;
     }
 
-    #logoutBtn,
-    #verifyBtn,
-    #redeemBtn,
-    #doneBtn {
+    #logoutBtn, #verifyBtn, #redeemBtn, #doneBtn {
       font-family: 'Super Funtime', cursive;
       font-weight: bold;
       background-color: #fefef8;
@@ -112,8 +104,7 @@
       margin-left: 10px;
     }
 
-    #redeemBtn,
-    #doneBtn {
+    #redeemBtn, #doneBtn {
       display: none;
     }
 
@@ -220,8 +211,29 @@
       border: 2px solid #9d1b1b;
     }
 
+    /* Tablet */
+    @media (max-width: 1024px) {
+      .dashboard-wrapper {
+        padding: 20px 15px;
+      }
+
+      h1 {
+        font-size: 2em;
+      }
+
+      h2 {
+        font-size: 1.5em;
+      }
+    }
+
+    /* Mobile */
     @media (max-width: 768px) {
-      .code-actions {
+      .dashboard-grid {
+        flex-direction: column;
+      }
+
+      .code-actions,
+      .info-actions {
         flex-direction: column;
         align-items: stretch;
       }
@@ -234,16 +246,23 @@
         width: 100%;
       }
 
-      .info-actions {
-        flex-direction: column;
-        align-items: stretch;
+      h1 {
+        font-size: 1.75em;
+        padding: 0;
+      }
+
+      .section {
+        padding: 15px;
+      }
+
+      .dashboard-wrapper {
+        padding: 15px;
       }
     }
   </style>
 
-  <!-- Inject Firebase config securely -->
+  <!-- Firebase Config -->
   <script id="firebase-config" data-config="%7B%22apiKey%22%3A%22AIzaSyBJxxcGhuYspiZ9HRAlZgihgXLaA2FjPXc%22%2C%22authDomain%22%3A%22coastalcouponverifier.firebaseapp.com%22%2C%22projectId%22%3A%22coastalcouponverifier%22%2C%22storageBucket%22%3A%22coastalcouponverifier.firebasestorage.app%22%2C%22messagingSenderId%22%3A%22189807704712%22%2C%22appId%22%3A%221%3A189807704712%3Aweb%3A9427e68464115f388ebd3d%22%7D"></script>
-
   <script type="module" src="scripts/dashboard.js"></script>
   <script>
     const sendHeight = () => {
@@ -260,7 +279,7 @@
     <h1>Welcome to Your Dashboard</h1>
     <div class="dashboard-wrapper">
       <div class="dashboard-grid">
-        <!-- LEFT COLUMN -->
+        <!-- LEFT SIDE -->
         <div class="left-column">
           <h2>Your Information</h2>
           <div class="section">
@@ -268,9 +287,7 @@
             <div class="info-actions">
               <div style="line-height: 1.2; margin-bottom: 5px;">
                 <a id="edit-offer-link" href="https://forms.gle/v78Uoy89SkicjR486" target="_blank">Edit Offer (Form Submission)</a><br>
-                <span style="font-size: 0.75em; color: #9d1b1b; font-weight: bold;">
-                  *Submit at least 2 weeks before desired implementation date
-                </span>
+                <span style="font-size: 0.75em; color: #9d1b1b; font-weight: bold;">*Submit at least 2 weeks before desired implementation date</span>
               </div>
               <button id="logoutBtn">Log Out</button>
             </div>
@@ -286,7 +303,7 @@
           </div>
         </div>
 
-        <!-- RIGHT COLUMN -->
+        <!-- RIGHT SIDE -->
         <div class="right-column">
           <h2>Verify Customer Code</h2>
           <div class="section">
