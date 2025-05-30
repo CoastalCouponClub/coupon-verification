@@ -5,13 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Business Dashboard</title>
 
-  <!-- Fonts + Styles -->
   <style>
     @font-face {
       font-family: 'Super Funtime';
       src: url('Super Funtime.ttf') format('truetype');
     }
-
     @font-face {
       font-family: 'ABeeZee';
       src: url('ABeeZee-Regular.ttf') format('truetype');
@@ -35,7 +33,7 @@
     .dashboard-wrapper {
       border: 5px solid #222D47;
       border-radius: 12px;
-      padding: 20px 30px 30px;
+      padding: 20px 30px 40px;
       max-width: 1200px;
       width: 100%;
       background-color: #fefef8;
@@ -47,22 +45,21 @@
       font-family: 'Super Funtime', cursive;
       text-align: center;
       font-size: 2.5em;
-      margin: 0;
-      padding: 10px 20px;
-      letter-spacing: 1px;
+      margin-top: 0;
+      margin-bottom: 30px;
       color: #222d47;
-      background-color: #fefef8;
     }
 
     .dashboard-grid {
       display: flex;
       gap: 20px;
       justify-content: space-between;
+      flex-wrap: nowrap;
     }
 
     .left-column, .right-column {
       flex: 1;
-      min-width: 0;
+      min-width: 320px;
     }
 
     .section {
@@ -76,8 +73,7 @@
     h2 {
       font-family: 'Super Funtime', cursive;
       font-size: 1.75em;
-      margin: 0 0 10px 0;
-      letter-spacing: 1px;
+      margin: 0 0 10px;
       color: #222d47;
       text-align: center;
     }
@@ -101,7 +97,6 @@
     #verifyBtn {
       background-color: #222D47;
       color: #fefef8;
-      margin-left: 10px;
     }
 
     #redeemBtn, #doneBtn {
@@ -141,7 +136,6 @@
       border: 2px solid #222D47;
       border-radius: 10px;
       cursor: pointer;
-      letter-spacing: 2px;
       font-size: .75em;
     }
 
@@ -158,11 +152,6 @@
       font-weight: bold;
       text-decoration: none;
       color: #222D47;
-      letter-spacing: .8px;
-    }
-
-    #edit-offer-link:hover {
-      text-decoration: underline;
     }
 
     #analytics-note {
@@ -170,70 +159,31 @@
       font-weight: bold;
       margin-top: 10px;
       color: #222D47;
-      letter-spacing: .8px;
-    }
-
-    #analytics-note a {
-      color: #222D47;
-      text-decoration: none;
-    }
-
-    #analytics-note a:hover {
-      text-decoration: underline;
     }
 
     .info-actions {
       display: flex;
       justify-content: space-between;
-      align-items: center;
       flex-wrap: wrap;
       gap: 10px;
       margin-top: 10px;
     }
 
-    .form-message {
-      margin-top: 15px;
-      text-align: center;
-      font-weight: bold;
-      padding: 12px 16px;
-      border-radius: 10px;
-    }
-
-    .success {
-      color: #1b4d3e;
-      background-color: #d0f0e8;
-      border: 2px solid #1b4d3e;
-    }
-
-    .error {
-      color: #9d1b1b;
-      background-color: #fde0e0;
-      border: 2px solid #9d1b1b;
-    }
-
-    /* Tablet */
     @media (max-width: 1024px) {
-      .dashboard-wrapper {
-        padding: 20px 15px;
+      .dashboard-grid {
+        flex-direction: column;
       }
+      .dashboard-wrapper {
+        padding: 20px;
+      }
+    }
 
+    @media (max-width: 600px) {
       h1 {
         font-size: 2em;
       }
 
-      h2 {
-        font-size: 1.5em;
-      }
-    }
-
-    /* Mobile */
-    @media (max-width: 768px) {
-      .dashboard-grid {
-        flex-direction: column;
-      }
-
-      .code-actions,
-      .info-actions {
+      .code-actions {
         flex-direction: column;
         align-items: stretch;
       }
@@ -246,46 +196,40 @@
         width: 100%;
       }
 
-      h1 {
-        font-size: 1.75em;
-        padding: 0;
+      .info-actions {
+        flex-direction: column;
+        align-items: stretch;
       }
 
       .section {
-        padding: 15px;
+        padding: 16px;
       }
 
       .dashboard-wrapper {
-        padding: 15px;
+        border-width: 3px;
+      }
+
+      .delete-button {
+        font-size: 0.7em;
+        padding: 4px 6px;
       }
     }
   </style>
 
-  <!-- Firebase Config -->
   <script id="firebase-config" data-config="%7B%22apiKey%22%3A%22AIzaSyBJxxcGhuYspiZ9HRAlZgihgXLaA2FjPXc%22%2C%22authDomain%22%3A%22coastalcouponverifier.firebaseapp.com%22%2C%22projectId%22%3A%22coastalcouponverifier%22%2C%22storageBucket%22%3A%22coastalcouponverifier.firebasestorage.app%22%2C%22messagingSenderId%22%3A%22189807704712%22%2C%22appId%22%3A%221%3A189807704712%3Aweb%3A9427e68464115f388ebd3d%22%7D"></script>
   <script type="module" src="scripts/dashboard.js"></script>
-  <script>
-    const sendHeight = () => {
-      const height = document.body.scrollHeight;
-      window.parent.postMessage({ type: 'resize', height }, '*');
-    };
-    window.addEventListener('load', sendHeight);
-    window.addEventListener('resize', sendHeight);
-  </script>
 </head>
-
 <body>
   <div class="dashboard-container">
     <h1>Welcome to Your Dashboard</h1>
     <div class="dashboard-wrapper">
       <div class="dashboard-grid">
-        <!-- LEFT SIDE -->
         <div class="left-column">
           <h2>Your Information</h2>
           <div class="section">
             <div id="business-info"></div>
             <div class="info-actions">
-              <div style="line-height: 1.2; margin-bottom: 5px;">
+              <div>
                 <a id="edit-offer-link" href="https://forms.gle/v78Uoy89SkicjR486" target="_blank">Edit Offer (Form Submission)</a><br>
                 <span style="font-size: 0.75em; color: #9d1b1b; font-weight: bold;">*Submit at least 2 weeks before desired implementation date</span>
               </div>
@@ -298,12 +242,11 @@
             <p><strong>Active Customers:</strong> <span id="activeCustomers">0</span></p>
             <p><strong>Coupon Redemptions:</strong> <span id="totalRedemptions">0</span></p>
             <p id="analytics-note">
-              <a href="mailto:contact@coastalcouponclub.com" target="_blank">Email contact@coastalcouponclub.com to Export Data</a>
+              <a href="mailto:contact@coastalcouponclub.com">Email contact@coastalcouponclub.com to Export Data</a>
             </p>
           </div>
         </div>
 
-        <!-- RIGHT SIDE -->
         <div class="right-column">
           <h2>Verify Customer Code</h2>
           <div class="section">
@@ -314,7 +257,6 @@
               <button id="doneBtn">Done</button>
             </div>
             <p id="redeemStatus"></p>
-            <div id="dashboardMessage" class="form-message" style="display: none;"></div>
           </div>
 
           <div class="section" id="redemptionHistorySection">
@@ -324,12 +266,10 @@
         </div>
       </div>
 
-      <div style="width: 100%; text-align: right; margin-top: 10px; padding-right: 10px;">
-        <p style="font-size: 0.75em; color: #444; font-family: 'ABeeZee', sans-serif; margin: 0;">
+      <div style="width: 100%; text-align: right; margin-top: 10px;">
+        <p style="font-size: 0.75em; color: #444; font-family: 'ABeeZee', sans-serif;">
           For technical support, contact
-          <a href="mailto:admin@coastalcouponclub.com" style="color: #222D47; text-decoration: none;">
-            admin@coastalcouponclub.com
-          </a>
+          <a href="mailto:admin@coastalcouponclub.com" style="color: #222D47;">admin@coastalcouponclub.com</a>
         </p>
       </div>
     </div>
