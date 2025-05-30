@@ -19,9 +19,9 @@ exports.handler = async () => {
 
     for (const docSnap of snapshot.docs) {
       const data = docSnap.data();
-      const validUntil = data.validUntil instanceof Date
-        ? data.validUntil
-        : new Date(data.validUntil);
+      const validUntil =
+  data.validUntil?.toDate?.() || new Date(data.validUntil);
+
 
       if (validUntil.getTime() < now && data.isValid !== false) {
         updates.push(
