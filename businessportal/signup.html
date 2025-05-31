@@ -158,20 +158,24 @@
       <input type="password" id="signup-password" placeholder="Password" required />
       <input type="text" id="signup-offer" placeholder="Coupon Offer (e.g., 50% off)" required />
       <select id="signup-redemption-limit" required>
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-        <option value="unlimited">Unlimited</option>
-      </select>
-      <select id="signup-reset-interval" required>
-        <option value="none">None</option>
-        <option value="daily">Daily</option>
-        <option value="weekly">Weekly</option>
-        <option value="monthly">Monthly</option>
-        <option value="yearly">Yearly</option>
-      </select>
+  <option value="" disabled selected>Redemption Limit (e.g., 2 per month)</option>
+  <option value="1">1</option>
+  <option value="2">2</option>
+  <option value="3">3</option>
+  <option value="4">4</option>
+  <option value="5">5</option>
+  <option value="unlimited">Unlimited</option>
+</select>
+
+<select id="signup-reset-interval" required>
+  <option value="" disabled selected>Reset Interval (e.g., Monthly)</option>
+  <option value="none">None</option>
+  <option value="daily">Daily</option>
+  <option value="weekly">Weekly</option>
+  <option value="monthly">Monthly</option>
+  <option value="yearly">Yearly</option>
+</select>
+
       <input type="text" id="signup-invite-code" placeholder="Invite Code" required />
 
       <button type="submit">Sign Up</button>
